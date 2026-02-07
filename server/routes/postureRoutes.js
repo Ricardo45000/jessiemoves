@@ -5,25 +5,46 @@ const router = express.Router();
 //Ideally this could come from a database, but static is fine for now
 const supportedPostures = [
     {
-        id: 'plank',
-        name: 'Plank',
-        description: 'Core strength and stability.',
-        benefits: ['Strengthens core', 'Improves stability', 'Tones shoulders'],
-        image: '/assets/plank.png' // Placeholder path
+        id: 'pelvic_curl',
+        name: 'Pelvic Curl',
+        description: 'Warm-up for spine mobility and hamstring strength.',
+        benefits: ['Mobilizes spine', 'Strengthens glutes/hamstrings', 'Core control'],
+        image: '/assets/pelvic_curl.png'
     },
     {
-        id: 'downward_dog',
-        name: 'Downward Dog',
-        description: 'Full body stretch and rejuvenation.',
-        benefits: ['Stretches hamstrings', 'Strengthens arms', 'Calms the mind'],
-        image: '/assets/downward_dog.png'
+        id: 'chest_lift',
+        name: 'Chest Lift',
+        description: 'Core strengthener focusing on abdominals.',
+        benefits: ['Strengthens abdominals', 'Stabilizes pelvis', 'Protects neck'],
+        image: '/assets/chest_lift.png'
     },
     {
-        id: 'warrior_2',
-        name: 'Warrior 2',
-        description: 'Leg strength and hip opening.',
-        benefits: ['Strengthens legs', 'Opens hips', 'Improves balance'],
-        image: '/assets/warrior_2.png'
+        id: 'the_hundred',
+        name: 'The Hundred',
+        description: 'Classic dynamic warm-up for core stability and breathing.',
+        benefits: ['Core stamina', 'Cardio effect', 'Circulation'],
+        image: '/assets/the_hundred.png'
+    },
+    {
+        id: 'one_leg_circle',
+        name: 'One-Leg Circle',
+        description: 'Hip mobility and pelvic stability challenge.',
+        benefits: ['Hip range of motion', 'Pelvic stability', 'Abdominal control'],
+        image: '/assets/one_leg_circle.png'
+    },
+    {
+        id: 'roll_up',
+        name: 'Roll-Up',
+        description: 'Full body articulation and abdominal challenge.',
+        benefits: ['Spinal flexibility', 'Abdominal strength', 'Hamstring stretch'],
+        image: '/assets/roll_up.png'
+    },
+    {
+        id: 'spine_stretch',
+        name: 'Spine Stretch',
+        description: 'Articulates the spine and stretches the back.',
+        benefits: ['Spinal articulation', 'Hamstring stretch', 'Posture awareness'],
+        image: '/assets/spine_stretch.png'
     }
 ];
 

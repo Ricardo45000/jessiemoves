@@ -143,7 +143,7 @@ const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
 
             {/* Available Postures */}
             <section style={{ marginBottom: '40px' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', borderLeft: '4px solid #4caf50', paddingLeft: '15px' }}>Available Exercises</h2>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', borderLeft: '4px solid #4caf50', paddingLeft: '15px' }}>Available Pilates Exercises</h2>
                 <PostureList />
             </section>
 

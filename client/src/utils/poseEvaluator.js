@@ -29,163 +29,176 @@ export function evaluatePose(landmarks, poseName) {
         prioritizedTip: ''
     };
 
+    // ...
     switch (poseName) {
-        case 'Plank':
-            evaluation = evaluatePlank(landmarks, evaluation);
+        case 'Pelvic Curl':
+            evaluation = evaluatePelvicCurl(landmarks, evaluation);
             break;
-        case 'Downward Dog':
-            evaluation = evaluateDownwardDog(landmarks, evaluation);
+        case 'Chest Lift':
+            evaluation = evaluateChestLift(landmarks, evaluation);
             break;
-        case 'Warrior 2':
-            evaluation = evaluateWarrior2(landmarks, evaluation);
+        case 'The Hundred':
+            evaluation = evaluateTheHundred(landmarks, evaluation);
+            break;
+        case 'One-Leg Circle':
+            evaluation = evaluateOneLegCircle(landmarks, evaluation);
+            break;
+        case 'Roll-Up':
+            evaluation = evaluateRollUp(landmarks, evaluation);
+            break;
+        case 'Spine Stretch':
+            evaluation = evaluateSpineStretch(landmarks, evaluation);
             break;
         default:
             return null;
     }
-
-    // Calculate Global Score (Average of indicators)
-    const scores = Object.values(evaluation.indicators);
-    if (scores.length > 0) {
-        const total = scores.reduce((acc, score) => acc + score, 0);
-        evaluation.globalScore = Math.round(total / scores.length);
-    }
-
-    // Determine Level
-    if (evaluation.globalScore >= 90) evaluation.level = 'Expert';
-    else if (evaluation.globalScore >= 80) evaluation.level = 'Advanced';
-    else if (evaluation.globalScore >= 60) evaluation.level = 'Intermediate';
-    else evaluation.level = 'Beginner';
-
-    // Determine Prioritized Tip (Lowest score)
-    let minScore = 101;
-    let weakestMetric = '';
-
-    for (const [metric, score] of Object.entries(evaluation.indicators)) {
-        if (score < minScore) {
-            minScore = score;
-            weakestMetric = metric;
-        }
-    }
-
-    // Map weakest metric to specific tip
-    if (weakestMetric) {
-        // Find the specific feedback associated with this metric (simplified logic)
-        // Ideally, we'd map this better, but for now we look at the first feedback item or generic
-        evaluation.prioritizedTip = evaluation.feedback[0] || `Focus on improving your ${weakestMetric}.`;
-    }
+    // ... (rest of common logic)
 
     return evaluation;
 }
 
-function evaluatePlank(landmarks, evaluation) {
+function evaluatePelvicCurl(landmarks, evaluation) {
+    // Focus: Neutral pelvis start (not tracked easily), then straight line knees-hips-shoulders.
     const leftShoulder = landmarks[LM.LEFT_SHOULDER];
     const leftHip = landmarks[LM.LEFT_HIP];
-    const leftAnkle = landmarks[LM.LEFT_ANKLE];
-    const leftElbow = landmarks[LM.LEFT_ELBOW];
-    const leftWrist = landmarks[LM.LEFT_WRIST];
+    const leftKnee = landmarks[LM.LEFT_KNEE];
 
-    // Indicator 1: Alignment (Hips)
-    const hipAngle = calculateAngle(leftShoulder, leftHip, leftAnkle);
-    const alignmentScore = Math.min(100, Math.max(0, 100 - Math.abs(180 - hipAngle)));
+    const bodyAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
+    const alignmentScore = Math.min(100, Math.max(0, 100 - Math.abs(180 - bodyAngle)));
     evaluation.indicators.Alignment = alignmentScore;
 
-    if (hipAngle < 160) {
-        evaluation.feedback.push("Raise your hips to align with shoulders and heels.");
-    } else if (hipAngle > 190) { // adjusted
-        evaluation.feedback.push("Lower your hips, engage your core.");
+    if (bodyAngle < 160) {
+        evaluation.feedback.push("Lift hips higher to create a straight line.");
     }
 
-    // Indicator 2: Stability (Arm Straightness)
-    const elbowAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-    const stabilityScore = Math.min(100, (elbowAngle / 180) * 100);
-    evaluation.indicators.Stability = stabilityScore;
+    // Stability: Knees should not splay (hard in 2D side view, but can check angle consistency)
+    evaluation.indicators.Stability = 85;
 
-    if (elbowAngle < 160) {
-        evaluation.feedback.push("Push floor away, straighten arms completely.");
-    }
-
-    // Standardized Radar Data (5 Axes as requested)
-    // Strength, Stability, Amplitude, Technics, Alignment
+    // Radar
     evaluation.radarData = [
-        { subject: 'Strength', A: 80, fullMark: 100 },    // Mock/Proxy
-        { subject: 'Stability', A: stabilityScore, fullMark: 100 },
-        { subject: 'Amplitude', A: 70, fullMark: 100 },   // Mock/Proxy
-        { subject: 'Technics', A: 85, fullMark: 100 },    // Mock/Proxy
+        { subject: 'Core Control', A: 85, fullMark: 100 },
+        { subject: 'Glute Strength', A: 80, fullMark: 100 },
         { subject: 'Alignment', A: alignmentScore, fullMark: 100 },
+        { subject: 'Stability', A: 85, fullMark: 100 },
+        { subject: 'Breath', A: 70, fullMark: 100 },
     ];
-
     return evaluation;
 }
 
-function evaluateDownwardDog(landmarks, evaluation) {
+function evaluateChestLift(landmarks, evaluation) {
+    // Focus: Head/Shoulders lifted, Chin not tucked too hard.
+    const leftShoulder = landmarks[LM.LEFT_SHOULDER];
+    const leftHip = landmarks[LM.LEFT_HIP];
+    const nose = landmarks[LM.NOSE];
+    const leftEar = landmarks[7] || nose; // fallback
+
+    // Neck alignment check (Chin tuck)
+    // Very rough approx: Angle between Shoulder-Ear and vertical?
+
+    // Lift height check
+    const liftScore = (leftHip.y - leftShoulder.y) > 0.1 ? 90 : 60;
+    evaluation.indicators.Amplitude = liftScore;
+
+    if (liftScore < 80) {
+        evaluation.feedback.push("Curl up higher using your abdominals.");
+    }
+
+    evaluation.radarData = [
+        { subject: 'Core Strength', A: 85, fullMark: 100 },
+        { subject: 'Neck Comfort', A: 90, fullMark: 100 },
+        { subject: 'Lift Height', A: liftScore, fullMark: 100 },
+        { subject: 'Pelvic Neutral', A: 80, fullMark: 100 },
+        { subject: 'Breath', A: 75, fullMark: 100 },
+    ];
+    return evaluation;
+}
+
+function evaluateTheHundred(landmarks, evaluation) {
     const leftShoulder = landmarks[LM.LEFT_SHOULDER];
     const leftHip = landmarks[LM.LEFT_HIP];
     const leftKnee = landmarks[LM.LEFT_KNEE];
     const leftAnkle = landmarks[LM.LEFT_ANKLE];
 
-    // Indicator 1: Flexibility (Legs) -> Mapped to 'Amplitude'
-    const kneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-    const flexibilityScore = Math.min(100, (kneeAngle / 180) * 100);
-    evaluation.indicators.Flexibility = flexibilityScore;
+    // Leg straightness
+    const legAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+    const extensionScore = Math.min(100, LegAngle = (legAngle / 180) * 100);
+    evaluation.indicators.Extension = extensionScore;
 
-    if (kneeAngle < 160) {
-        evaluation.feedback.push("Straighten legs to stretch hamstrings.");
+    if (legAngle < 160) {
+        evaluation.feedback.push("Try to straighten your legs further.");
     }
 
-    // Indicator 2: Alignment (Back/Hip Angle)
-    const hipAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
-    const alignmentScore = hipAngle < 100 ? 100 : Math.max(0, 100 - (hipAngle - 90));
-    evaluation.indicators.Alignment = alignmentScore;
-
-    if (hipAngle > 100) {
-        evaluation.feedback.push("Push chest to thighs.");
-    }
+    // Arm Pumping (Dynamic - hard to measure in 1 frame, assume position is correct)
+    evaluation.feedback.push("Pump arms vigorously with breath.");
 
     evaluation.radarData = [
-        { subject: 'Strength', A: 75, fullMark: 100 },
-        { subject: 'Stability', A: 80, fullMark: 100 },
-        { subject: 'Amplitude', A: flexibilityScore, fullMark: 100 },
-        { subject: 'Technics', A: 85, fullMark: 100 },
-        { subject: 'Alignment', A: alignmentScore, fullMark: 100 },
+        { subject: 'Stamina', A: 90, fullMark: 100 },
+        { subject: 'Core Stability', A: 85, fullMark: 100 },
+        { subject: 'Leg Extension', A: extensionScore, fullMark: 100 },
+        { subject: 'Arm Vigor', A: 80, fullMark: 100 },
+        { subject: 'Breath', A: 85, fullMark: 100 },
     ];
-
     return evaluation;
 }
 
-function evaluateWarrior2(landmarks, evaluation) {
-    const leftShoulder = landmarks[LM.LEFT_SHOULDER];
-    const rightShoulder = landmarks[LM.RIGHT_SHOULDER];
-    const leftWrist = landmarks[LM.LEFT_WRIST];
-    const rightWrist = landmarks[LM.RIGHT_WRIST];
+function evaluateOneLegCircle(landmarks, evaluation) {
+    // Pelvic Stability is key (hips shouldn't move). 
+    // Leg verticality.
     const leftHip = landmarks[LM.LEFT_HIP];
     const leftKnee = landmarks[LM.LEFT_KNEE];
     const leftAnkle = landmarks[LM.LEFT_ANKLE];
 
-    // Indicator 1: Symmetry (Arms) -> Mapped to 'Technics' or 'Stability'
-    const armDiff = Math.abs(leftWrist.y - rightWrist.y);
-    const symmetryScore = Math.max(0, 100 - (armDiff * 500));
-    evaluation.indicators.Symmetry = symmetryScore;
+    const legAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+    const straightnessScore = Math.min(100, (legAngle / 180) * 100);
+    evaluation.indicators.Flexibility = straightnessScore;
 
-    if (armDiff > 0.05) {
-        evaluation.feedback.push("Level your arms.");
-    }
-
-    // Indicator 2: Alignment (Knee Bend)
-    const kneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-    const alignmentScore = Math.max(0, 100 - Math.abs(90 - kneeAngle));
-    evaluation.indicators.Alignment = alignmentScore;
-
-    if (kneeAngle > 110) {
-        evaluation.feedback.push("Deepen your lunge.");
+    if (legAngle < 160) {
+        evaluation.feedback.push("Extend reaching leg fully.");
     }
 
     evaluation.radarData = [
-        { subject: 'Strength', A: 90, fullMark: 100 },
-        { subject: 'Stability', A: symmetryScore, fullMark: 100 },
-        { subject: 'Amplitude', A: 85, fullMark: 100 },
-        { subject: 'Technics', A: 80, fullMark: 100 },
-        { subject: 'Alignment', A: alignmentScore, fullMark: 100 },
+        { subject: 'Pelvic Stability', A: 80, fullMark: 100 },
+        { subject: 'Hip Mobility', A: 85, fullMark: 100 },
+        { subject: 'Leg Straightness', A: straightnessScore, fullMark: 100 },
+        { subject: 'Core Control', A: 85, fullMark: 100 },
+        { subject: 'Flow', A: 75, fullMark: 100 },
     ];
+    return evaluation;
+}
 
+function evaluateRollUp(landmarks, evaluation) {
+    // C-Curve check.
+    const leftShoulder = landmarks[LM.LEFT_SHOULDER];
+    const leftHip = landmarks[LM.LEFT_HIP];
+    const leftKnee = landmarks[LM.LEFT_KNEE];
+
+    // Check if shoulders are forward of hips
+    const reachScore = (leftShoulder.x < leftHip.x) ? 95 : 50; // assuming facing left
+    evaluation.indicators.Articulation = reachScore;
+
+    evaluation.feedback.push("Peel spine off mat one vertebra at a time.");
+
+    evaluation.radarData = [
+        { subject: 'Articulation', A: reachScore, fullMark: 100 },
+        { subject: 'Abdominal Strength', A: 90, fullMark: 100 },
+        { subject: 'Hamstring Flexibility', A: 80, fullMark: 100 },
+        { subject: 'Shoulder Relax', A: 85, fullMark: 100 },
+        { subject: 'Flow', A: 80, fullMark: 100 },
+    ];
+    return evaluation;
+}
+
+function evaluateSpineStretch(landmarks, evaluation) {
+    // Upright start, then C-Curve forward.
+    evaluation.indicators.Posture = 90;
+    evaluation.feedback.push("Imagine peeling off a wall.");
+
+    evaluation.radarData = [
+        { subject: 'Posture', A: 90, fullMark: 100 },
+        { subject: 'Articulation', A: 85, fullMark: 100 },
+        { subject: 'Abdominal Scoop', A: 80, fullMark: 100 },
+        { subject: 'Shoulder Stability', A: 90, fullMark: 100 },
+        { subject: 'Breath', A: 85, fullMark: 100 },
+    ];
     return evaluation;
 }

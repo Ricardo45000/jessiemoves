@@ -31,7 +31,7 @@ const PostureList = () => {
                     transition: 'transform 0.2s',
                     cursor: 'default'
                 }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🧘</div>
+                    <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🤸‍♀️</div>
                     <h3 style={{ margin: '0 0 10px 0', color: '#fff' }}>{posture.name}</h3>
                     <p style={{ fontSize: '0.9rem', color: '#aaa', marginBottom: '15px' }}>{posture.description}</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
