@@ -1,12 +1,13 @@
-# JessieMoves: AI-Powered Yoga Coach 🧘‍♀️🤖
+# JessieMoves: AI-Powered Pilates Coach 🤸‍♀️🤖
 
-JessieMoves is a web application that provides real-time, automated posture coaching using AI. It leverages computer vision (MediaPipe) to analyze yoga poses directly in the browser and offers instant, personalized feedback to help users improve their form.
+JessieMoves is a web application that provides real-time, automated Pilates coaching using AI. It leverages computer vision (MediaPipe) to analyze Pilates exercises directly in the browser and offers instant, personalized feedback to help users improve their form.
 
 ![Demo Screenshot](/Users/ricardoda-silva/.gemini/antigravity/brain/ac891b88-4de5-4ebb-8bfa-a79faef3bc0a/dashboard_scroll_down_1770504197285.png)
 
 ## 🚀 Features
 
 -   **Real-time Analysis**: Detects body landmarks and analyzes posture quality instantly.
+-   **Pilates Exercises**: Support for Pelvic Curl, Chest Lift, The Hundred, One-Leg Circle, Roll-Up, and Spine Stretch.
 -   **Interactive Feedback**: Provides visual cues and textual advice on alignment and stability.
 -   **Progress Tracking**: Saves session data (score, detailed metrics) to track improvement over time.
 -   **User Dashboard**: Visualizes history with charts and detailed breakdown of past sessions.
