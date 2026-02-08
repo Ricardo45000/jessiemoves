@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     // Check if user is logged in (via HttpOnly cookie)
     const checkUserLoggedIn = async () => {
         try {
-            const res = await fetch('http://localhost:5001/api/auth/me', {
+            const res = await fetch('/api/auth/me', {
                 // Include credentials to send cookies
                 credentials: 'include'
             });
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
     // Login
     const login = async (email, password) => {
-        const res = await fetch('http://localhost:5001/api/auth/login', {
+        const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
 
     // Register
     const register = async (userData) => {
-        const res = await fetch('http://localhost:5001/api/auth/register', {
+        const res = await fetch('/api/auth/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
 
     // Logout
     const logout = async () => {
-        await fetch('http://localhost:5001/api/auth/logout', { method: 'POST' });
+        await fetch('/api/auth/logout', { method: 'POST' });
         setUser(null);
     };
 
