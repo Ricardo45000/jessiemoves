@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const logger = require('./config/logger');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -14,8 +16,13 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Logging Middleware
+app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+
+// CORS Configuration
 app.use(cors({
-    origin: 'http://localhost:5173', // Vite client address
+    origin: ['http://localhost:5173', 'http://13.49.69.94'], // Allow frontend domains
     credentials: true // Allow cookies
 }));
 
@@ -35,5 +42,5 @@ app.get('/', (req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    logger.info(`Server running on port ${PORT}`);
 });
