@@ -3,6 +3,13 @@ const router = express.Router();
 const Stripe = require('stripe');
 const User = require('../models/User');
 
+console.log('Attempting to initialize Stripe...');
+if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('CRITICAL ERROR: STRIPE_SECRET_KEY is missing from environment variables!');
+} else {
+    console.log('STRIPE_SECRET_KEY found. Initializing...');
+}
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Middleware to protect routes (optional, if you want only logged-in users to buy)
