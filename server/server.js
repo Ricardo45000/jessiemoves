@@ -9,6 +9,8 @@ const logger = require('./config/logger');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const postureRoutes = require('./routes/postureRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes'); // Import newsletter routes
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,6 +37,8 @@ mongoose.connect(process.env.MONGO_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/postures', postureRoutes);
+app.use('/api/newsletter', newsletterRoutes); // Use newsletter routes
+
 
 app.get('/', (req, res) => {
     res.send('JessieMoves API is running');
