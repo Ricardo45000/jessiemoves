@@ -18,12 +18,19 @@ const userSchema = new mongoose.Schema({
         goals: [{ type: String }]
     },
     posture_history: [{
+        poseName: String,
         date: { type: Date, default: Date.now },
-        pose: String,
         score: Number,
-        level: String,
-        indicators: Object, // { Alignment: 80, Stability: 70... }
-        feedback: [String] // Can be string or array, keeping array for flexibility based on previous code
+        feedback: [String],
+        radarData: Array, // Store breakdown
+        recommendation: {
+            title: String,
+            level: String,
+            reason: String,
+            media: String,
+            id: String
+        },
+        indicators: Object // { Alignment: 80, Stability: 70... }
     }]
 }, { timestamps: true });
 

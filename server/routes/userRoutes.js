@@ -25,19 +25,21 @@ const protect = async (req, res, next) => {
 // @access  Private
 router.post('/history', protect, async (req, res) => {
     try {
-        const { pose, score, level, indicators, feedback } = req.body;
+        const { pose, score, level, indicators, feedback, radarData, recommendation } = req.body;
 
         const user = await User.findById(req.user._id);
 
         if (user) {
             const newRecord = {
-                pose,
+                poseName: pose, // Map 'pose' to schema 'poseName'
                 score,
-                level,
-                indicators,
                 feedback,
+                radarData,
+                recommendation,
+                indicators,
                 date: Date.now()
             };
+
 
             user.posture_history.push(newRecord);
 
