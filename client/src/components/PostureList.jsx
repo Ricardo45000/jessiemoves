@@ -5,7 +5,7 @@ const PostureList = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://localhost:5001/api/postures/available')
+        fetch('/api/postures/available')
             .then(res => res.json())
             .then(data => {
                 setPostures(data);
