@@ -6,6 +6,7 @@ import MediaAnalysis from './components/MediaAnalysis';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
+import PremiumPage from './pages/PremiumPage';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import './App.css';
 import Dashboard from './components/Dashboard';
@@ -124,6 +125,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MainApp />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/premium"
+        element={
+          <ProtectedRoute>
+            <PremiumPage />
           </ProtectedRoute>
         }
       />

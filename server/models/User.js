@@ -15,7 +15,10 @@ const userSchema = new mongoose.Schema({
     profile: {
         first_name: { type: String, default: 'Yogi' },
         level: { type: String, default: 'Beginner', enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'] },
-        goals: [{ type: String }]
+        goals: [{ type: String }],
+        is_premium: { type: Boolean, default: false },
+        stripe_customer_id: { type: String },
+        subscription_id: { type: String }
     },
     posture_history: [{
         poseName: String,
