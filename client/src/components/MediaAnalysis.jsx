@@ -215,177 +215,177 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                                         {isAnalyzing ? `Analyzing... ${analysisProgress}%` : 'Generate Full Session Report 📊'}
                                     </button>
                                 ) : (
-                                ): (
-                                        <div>
-                                        {/* [NEW] Session Summary Card */ }
+
+                                    <div>
+                                        {/* [NEW] Session Summary Card */}
                                         {
-                                    sessionSummary && (
-                                        <div style={{ background: '#1a1a2e', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #333' }}>
-                                            <h3 style={{ color: '#fff', fontSize: '16px', margin: '0 0 10px 0', borderBottom: '1px solid #444', paddingBottom: '5px' }}>
-                                                Session Report 📋
-                                            </h3>
+                                            sessionSummary && (
+                                                <div style={{ background: '#1a1a2e', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #333' }}>
+                                                    <h3 style={{ color: '#fff', fontSize: '16px', margin: '0 0 10px 0', borderBottom: '1px solid #444', paddingBottom: '5px' }}>
+                                                        Session Report 📋
+                                                    </h3>
 
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4caf50' }}>{sessionSummary.globalScore}</div>
-                                                    <div style={{ fontSize: '10px', color: '#aaa' }}>Global Score</div>
-                                                </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '12px', color: '#fff' }}>{sessionSummary.totalPoses}</div>
-                                                    <div style={{ fontSize: '10px', color: '#aaa' }}>Poses Analyzed</div>
-                                                </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '12px', color: '#ff9800' }}>{sessionSummary.weakestIndicator || 'None'}</div>
-                                                    <div style={{ fontSize: '10px', color: '#aaa' }}>Main Focus</div>
-                                                </div>
-                                            </div>
-
-                                            <p style={{ color: '#ccc', fontSize: '12px', fontStyle: 'italic', marginBottom: '15px' }}>
-                                                "{sessionSummary.feedback}"
-                                            </p>
-
-                                            {/* Recommendation */}
-                                            {sessionSummary.recommendation && (
-                                                <div style={{ background: '#333', padding: '10px', borderRadius: '4px', borderLeft: '3px solid #e91e63', marginBottom: '15px' }}>
-                                                    <div style={{ fontSize: '10px', color: '#ff4081', fontWeight: 'bold', textTransform: 'uppercase' }}>Recommended for you</div>
-                                                    <div style={{ color: 'white', fontWeight: 'bold', fontSize: '13px' }}>{sessionSummary.recommendation.title}</div>
-                                                    <div style={{ color: '#bbb', fontSize: '11px', marginTop: '2px' }}>{sessionSummary.recommendation.description}</div>
-                                                    <a href={sessionSummary.recommendation.media} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '5px', fontSize: '11px', color: '#2196f3', textDecoration: 'none' }}>► Watch Tutorial</a>
-                                                </div>
-                                            )}
-
-                                            {/* [NEW] Advanced Metrics Bars */}
-                                            {sessionSummary.advancedMetrics && (
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                                                    {Object.entries(sessionSummary.advancedMetrics).map(([key, val]) => (
-                                                        <div key={key}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                                                                <span style={{ color: '#aaa', fontSize: '10px', textTransform: 'capitalize' }}>{key}</span>
-                                                                <span style={{ color: '#fff', fontSize: '10px' }}>{val}%</span>
-                                                            </div>
-                                                            <div style={{ height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
-                                                                <div style={{ height: '100%', width: `${val}%`, background: val > 80 ? '#4caf50' : val > 60 ? '#ff9800' : '#f44336' }}></div>
-                                                            </div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4caf50' }}>{sessionSummary.globalScore}</div>
+                                                            <div style={{ fontSize: '10px', color: '#aaa' }}>Global Score</div>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                }
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <div style={{ fontSize: '12px', color: '#fff' }}>{sessionSummary.totalPoses}</div>
+                                                            <div style={{ fontSize: '10px', color: '#aaa' }}>Poses Analyzed</div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <div style={{ fontSize: '12px', color: '#ff9800' }}>{sessionSummary.weakestIndicator || 'None'}</div>
+                                                            <div style={{ fontSize: '10px', color: '#aaa' }}>Main Focus</div>
+                                                        </div>
+                                                    </div>
 
-                                        <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '10px' }}>Session Timeline</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {sequenceData.map((item, idx) => (
-                                        <div key={idx} style={{ background: '#222', padding: '15px', borderRadius: '8px', display: 'flex', gap: '15px', alignItems: 'flex-start', borderBottom: '1px solid #333' }}>
-                                            <div style={{ position: 'relative' }}>
-                                                <img src={item.key_frame} alt="Keyframe" style={{ width: '100px', height: '75px', objectFit: 'cover', borderRadius: '6px' }} />
-                                                <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '3px' }}>
-                                                    {item.duration_sec}s
-                                                </div>
-                                            </div>
+                                                    <p style={{ color: '#ccc', fontSize: '12px', fontStyle: 'italic', marginBottom: '15px' }}>
+                                                        "{sessionSummary.feedback}"
+                                                    </p>
 
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div style={{ color: '#2196f3', fontSize: '15px', fontWeight: 'bold' }}>{item.pose}</div>
-                                                    {item.level && (
-                                                        <div style={{
-                                                            fontSize: '11px',
-                                                            fontWeight: 'bold',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '10px',
-                                                            background: item.level === 'Advanced' ? '#4caf50' : item.level === 'Intermediate' ? '#ff9800' : '#2196f3',
-                                                            color: '#fff'
-                                                        }}>
-                                                            {item.level} ({item.global_score || 0})
+                                                    {/* Recommendation */}
+                                                    {sessionSummary.recommendation && (
+                                                        <div style={{ background: '#333', padding: '10px', borderRadius: '4px', borderLeft: '3px solid #e91e63', marginBottom: '15px' }}>
+                                                            <div style={{ fontSize: '10px', color: '#ff4081', fontWeight: 'bold', textTransform: 'uppercase' }}>Recommended for you</div>
+                                                            <div style={{ color: 'white', fontWeight: 'bold', fontSize: '13px' }}>{sessionSummary.recommendation.title}</div>
+                                                            <div style={{ color: '#bbb', fontSize: '11px', marginTop: '2px' }}>{sessionSummary.recommendation.description}</div>
+                                                            <a href={sessionSummary.recommendation.media} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '5px', fontSize: '11px', color: '#2196f3', textDecoration: 'none' }}>► Watch Tutorial</a>
+                                                        </div>
+                                                    )}
+
+                                                    {/* [NEW] Advanced Metrics Bars */}
+                                                    {sessionSummary.advancedMetrics && (
+                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                                                            {Object.entries(sessionSummary.advancedMetrics).map(([key, val]) => (
+                                                                <div key={key}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                                                        <span style={{ color: '#aaa', fontSize: '10px', textTransform: 'capitalize' }}>{key}</span>
+                                                                        <span style={{ color: '#fff', fontSize: '10px' }}>{val}%</span>
+                                                                    </div>
+                                                                    <div style={{ height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+                                                                        <div style={{ height: '100%', width: `${val}%`, background: val > 80 ? '#4caf50' : val > 60 ? '#ff9800' : '#f44336' }}></div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     )}
                                                 </div>
+                                            )
+                                        }
 
-                                                <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>{item.start_time} - {item.end_time}</div>
-
-                                                {/* Feedback Section */}
-                                                {item.feedback && item.feedback.length > 0 && (
-                                                    <div style={{ marginTop: '8px', padding: '8px', background: '#333', borderRadius: '4px' }}>
-                                                        <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '4px', textTransform: 'uppercase' }}>Review</div>
-                                                        <ul style={{ margin: 0, paddingLeft: '15px', color: '#ccc', fontSize: '12px' }}>
-                                                            {item.feedback.map((fb, fidx) => (
-                                                                <li key={fidx}>{fb}</li>
-                                                            ))}
-                                                        </ul>
+                                        <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '10px' }}>Session Timeline</h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            {sequenceData.map((item, idx) => (
+                                                <div key={idx} style={{ background: '#222', padding: '15px', borderRadius: '8px', display: 'flex', gap: '15px', alignItems: 'flex-start', borderBottom: '1px solid #333' }}>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <img src={item.key_frame} alt="Keyframe" style={{ width: '100px', height: '75px', objectFit: 'cover', borderRadius: '6px' }} />
+                                                        <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '3px' }}>
+                                                            {item.duration_sec}s
+                                                        </div>
                                                     </div>
-                                                )}
 
-                                                {/* Score Identifiers */}
-                                                {item.score && (
-                                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                                                        {Object.entries(item.score).map(([key, val]) => (
-                                                            <div key={key} style={{ fontSize: '10px', color: '#888', background: '#222', border: '1px solid #444', padding: '2px 6px', borderRadius: '3px' }}>
-                                                                {key}: <span style={{ color: val > 80 ? '#4caf50' : '#ff9800' }}>{val}</span>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <div style={{ color: '#2196f3', fontSize: '15px', fontWeight: 'bold' }}>{item.pose}</div>
+                                                            {item.level && (
+                                                                <div style={{
+                                                                    fontSize: '11px',
+                                                                    fontWeight: 'bold',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '10px',
+                                                                    background: item.level === 'Advanced' ? '#4caf50' : item.level === 'Intermediate' ? '#ff9800' : '#2196f3',
+                                                                    color: '#fff'
+                                                                }}>
+                                                                    {item.level} ({item.global_score || 0})
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>{item.start_time} - {item.end_time}</div>
+
+                                                        {/* Feedback Section */}
+                                                        {item.feedback && item.feedback.length > 0 && (
+                                                            <div style={{ marginTop: '8px', padding: '8px', background: '#333', borderRadius: '4px' }}>
+                                                                <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '4px', textTransform: 'uppercase' }}>Review</div>
+                                                                <ul style={{ margin: 0, paddingLeft: '15px', color: '#ccc', fontSize: '12px' }}>
+                                                                    {item.feedback.map((fb, fidx) => (
+                                                                        <li key={fidx}>{fb}</li>
+                                                                    ))}
+                                                                </ul>
                                                             </div>
-                                                        ))}
+                                                        )}
+
+                                                        {/* Score Identifiers */}
+                                                        {item.score && (
+                                                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                                                {Object.entries(item.score).map(([key, val]) => (
+                                                                    <div key={key} style={{ fontSize: '10px', color: '#888', background: '#222', border: '1px solid #444', padding: '2px 6px', borderRadius: '3px' }}>
+                                                                        {key}: <span style={{ color: val > 80 ? '#4caf50' : '#ff9800' }}>{val}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => setSequenceData(null)}
-                                    style={{ marginTop: '10px', width: '100%', padding: '8px', background: '#333', color: '#aaa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-                                >
-                                    Reset Analysis
-                                </button>
+                                        <button
+                                            onClick={() => setSequenceData(null)}
+                                            style={{ marginTop: '10px', width: '100%', padding: '8px', background: '#333', color: '#aaa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                                        >
+                                            Reset Analysis
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
-                        )}
 
-                <div style={{ marginTop: '20px' }}>
-                    <h3 style={{ color: '#aaa', fontSize: '14px', textTransform: 'uppercase' }}>Performance Analysis</h3>
-                    <FeedbackRadar data={dashboardData.radarData} />
-                </div>
-
-                {recommendation && (
-                    <div style={{ marginTop: '20px', background: '#222', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #6a11cb' }}>
-                        <h3 style={{ color: 'white', marginTop: 0, fontSize: '16px' }}>Recommended for You</h3>
-                        <p style={{ color: '#ccc', fontSize: '13px', margin: '5px 0' }}>{recommendation.reason}</p>
-                        <div style={{ marginTop: '10px' }}>
-                            <h4 style={{ color: '#fff', fontSize: '14px', margin: '0 0 5px 0' }}>{recommendation.title}</h4>
-                            <p style={{ color: '#888', fontSize: '12px', margin: 0 }}>{recommendation.description}</p>
-                            {recommendation.media && (
-                                <a href={recommendation.media} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '10px', color: '#6a11cb', fontSize: '13px', textDecoration: 'none' }}>
-                                    ▶ Watch Video
-                                </a>
-                            )}
+                        <div style={{ marginTop: '20px' }}>
+                            <h3 style={{ color: '#aaa', fontSize: '14px', textTransform: 'uppercase' }}>Performance Analysis</h3>
+                            <FeedbackRadar data={dashboardData.radarData} />
                         </div>
+
+                        {recommendation && (
+                            <div style={{ marginTop: '20px', background: '#222', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #6a11cb' }}>
+                                <h3 style={{ color: 'white', marginTop: 0, fontSize: '16px' }}>Recommended for You</h3>
+                                <p style={{ color: '#ccc', fontSize: '13px', margin: '5px 0' }}>{recommendation.reason}</p>
+                                <div style={{ marginTop: '10px' }}>
+                                    <h4 style={{ color: '#fff', fontSize: '14px', margin: '0 0 5px 0' }}>{recommendation.title}</h4>
+                                    <p style={{ color: '#888', fontSize: '12px', margin: 0 }}>{recommendation.description}</p>
+                                    {recommendation.media && (
+                                        <a href={recommendation.media} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '10px', color: '#6a11cb', fontSize: '13px', textDecoration: 'none' }}>
+                                            ▶ Watch Video
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div style={{ color: '#666', marginTop: '50px', textAlign: 'center' }}>
+                        Waiting for pose detection...
                     </div>
                 )}
-            </>
-            ) : (
-            <div style={{ color: '#666', marginTop: '50px', textAlign: 'center' }}>
-                Waiting for pose detection...
             </div>
-                )}
-        </div>
 
-            {/* Main Content Area */ }
-    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', background: '#000' }}>
-        <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90vh' }}>
-            {type === 'image' ? (
-                <img ref={mediaRef} src={fileUrl} alt="Analysis Target" style={{ maxWidth: '100%', maxHeight: '90vh', display: 'block' }} />
-            ) : (
-                <video ref={mediaRef} src={fileUrl} controls style={{ maxWidth: '100%', maxHeight: '90vh', display: 'block' }} />
-            )}
+            {/* Main Content Area */}
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', background: '#000' }}>
+                <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90vh' }}>
+                    {type === 'image' ? (
+                        <img ref={mediaRef} src={fileUrl} alt="Analysis Target" style={{ maxWidth: '100%', maxHeight: '90vh', display: 'block' }} />
+                    ) : (
+                        <video ref={mediaRef} src={fileUrl} controls style={{ maxWidth: '100%', maxHeight: '90vh', display: 'block' }} />
+                    )}
 
-            <canvas
-                ref={canvasRef}
-                style={{
-                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none'
-                }}
-            />
-        </div>
-    </div>
+                    <canvas
+                        ref={canvasRef}
+                        style={{
+                            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none'
+                        }}
+                    />
+                </div>
+            </div>
         </div >
     );
 };
