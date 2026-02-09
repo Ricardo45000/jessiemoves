@@ -3,8 +3,6 @@ const router = express.Router();
 const Stripe = require('stripe');
 const User = require('../models/User');
 
-const User = require('../models/User');
-
 let stripe;
 if (process.env.STRIPE_SECRET_KEY) {
     console.log('STRIPE_SECRET_KEY found. Initializing Stripe...');
