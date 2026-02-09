@@ -75,8 +75,8 @@ router.post('/login', async (req, res) => {
             const token = generateToken(user._id);
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                secure: false, // process.env.NODE_ENV === 'production', // Disable secure for HTTP IP access
+                sameSite: 'lax', // 'strict', // Relax for Stripe redirects
                 maxAge: 30 * 24 * 60 * 60 * 1000
             });
 
