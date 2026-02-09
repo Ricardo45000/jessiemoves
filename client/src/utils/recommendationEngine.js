@@ -135,6 +135,26 @@ export function getRecommendation(poseName, radarData, userLevel = 'Beginner') {
     };
 }
 
+// [NEW] Session-Level Recommendation
+export function getSessionRecommendation(weakestIndicator) {
+    if (!weakestIndicator) return getDefaultRecommendation();
+
+    // Strategy: Recommend exercise that targets the weakest global indicator
+    // Filter database for exercises targeting this indicator
+    const candidates = EXERCISE_DATABASE.filter(ex => ex.targetIndicator === weakestIndicator);
+
+    if (candidates.length > 0) {
+        // Pick random or first
+        const improvement = candidates[0];
+        return {
+            ...improvement,
+            reason: `Your session analysis shows that '${weakestIndicator}' is your main area for improvement. This exercise is specifically designed to help.`
+        };
+    }
+
+    return getDefaultRecommendation();
+}
+
 function getDefaultRecommendation() {
     return EXERCISE_DATABASE[0];
 }

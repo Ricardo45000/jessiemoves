@@ -158,9 +158,12 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
 
             // --- POST PROCESSING ---
             const sequence = cleanSequence(capturedFrames);
+            const sessionSummary = generateSessionSummary(sequence); // [NEW] Generate Global Summary
+
             resolve({
-                video_name: null, // Caller can fill
-                posture_sequence: sequence
+                video_name: null,
+                posture_sequence: sequence,
+                session_summary: sessionSummary // [NEW] Return summary
             });
         };
     });
@@ -315,8 +318,75 @@ function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
     };
 }
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+/**
+ * Generates a global session summary from the sequence data.
+ */
+import { getSessionRecommendation } from './recommendationEngine';
+
+function generateSessionSummary(sequenceData) {
+    if (!sequenceData || sequenceData.length === 0) return null;
+
+    // 1. Accumulate Scores
+    const globalScores = {};
+    const globalCounts = {};
+    const poseScores = []; // { name, score, id }
+
+    sequenceData.forEach(item => {
+        if (!item.score) return;
+
+        // Track per-pose score for ranking
+        const itemMean = Object.values(item.score).reduce((a, b) => a + b, 0) / Object.values(item.score).length || 0;
+        poseScores.push({ name: item.pose, score: itemMean });
+
+        // Accumulate global
+        Object.entries(item.score).forEach(([key, val]) => {
+            if (!globalScores[key]) { globalScores[key] = 0; globalCounts[key] = 0; }
+            globalScores[key] += val;
+            globalCounts[key]++;
+        });
+    });
+
+    // 2. Average Global Scores
+    const averagedScores = {};
+    Object.keys(globalScores).forEach(key => {
+        averagedScores[key] = Math.round(globalScores[key] / globalCounts[key]);
+    });
+
+    // 3. Find Weakest Link
+    let minScore = 101;
+    let weakestIndicator = null;
+    Object.entries(averagedScores).forEach(([key, val]) => {
+        if (val < minScore) {
+            minScore = val;
+            weakestIndicator = key;
+        }
+    });
+
+    // 4. Rank Poses
+    poseScores.sort((a, b) => b.score - a.score);
+    const bestPoses = poseScores.slice(0, 3);
+    const worstPoses = poseScores.slice(-3).reverse(); // Worst first
+
+    // 5. Generate Feedback Text
+    const globalMean = Object.values(averagedScores).reduce((a, b) => a + b, 0) / Object.values(averagedScores).length || 0;
+
+    let feedbackText = `Level: ${globalMean > 85 ? 'Advanced' : globalMean > 70 ? 'Intermediate' : 'Beginner'} (${Math.round(globalMean)}/100). `;
+    if (minScore > 80) feedbackText += "Excellent session! Your form is very consistent.";
+    else if (minScore > 60) feedbackText += `Good effort. Focus on improving your ${weakestIndicator} to reach the next level.`;
+    else feedbackText += `Keep practicing. Your ${weakestIndicator} needs significant attention.`;
+
+    // 6. Get Recommendation
+    const recommendation = getSessionRecommendation(weakestIndicator);
+
+    return {
+        scores: averagedScores,
+        weakestIndicator,
+        bestPoses,
+        worstPoses,
+        feedback: feedbackText,
+        recommendation,
+        totalPoses: sequenceData.length,
+        globalScore: Math.round(globalMean)
+    };
 }
+
