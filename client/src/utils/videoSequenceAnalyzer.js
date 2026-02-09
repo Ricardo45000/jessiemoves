@@ -119,7 +119,8 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
                 time: videoElement.currentTime,
                 pose: poseName,
                 confidence,
-                image: keyframeImage // Potentially heavy, we'll filter later
+                image: keyframeImage,
+                landmarks: results.poseLandmarks // [NEW] Store landmarks for post-analysis
             });
 
             nextFrame();
@@ -202,24 +203,27 @@ function cleanSequence(rawFrames) {
     });
     if (currentSegment) merged.push(currentSegment);
 
-    // 2. Filter & Refine
+    // 2. Filter & Refine & Analyze Quality
     const cleaned = merged.filter(seg => {
-        // Filter out "Unknown" or very short segments (< 2s) unless high confidence?
-        // Let's keep Unknowns as "Transition" or "Rest" if long enough, otherwise drop.
         const duration = seg.end_time - seg.start_time;
-        if (seg.pose === 'Unknown' && duration < 3.0) return false; // Ignore short unknowns
-        if (duration < 1.0) return false; // Ignore erratic blips
+        if (seg.pose === 'Unknown' && duration < 3.0) return false;
+        if (duration < 1.0) return false;
         return true;
     }).map(seg => {
-        // 3. Find Best Keyframe
-        // Find frame with highest confidence (or middle if unknown)
+        // 3. Select Best Keyframe
         let bestFrame = seg.frames[0];
         if (seg.pose !== 'Unknown') {
             bestFrame = seg.frames.reduce((prev, curr) => (curr.confidence > prev.confidence ? curr : prev), seg.frames[0]);
         } else {
-            // Middle frame for transitions
             const midIdx = Math.floor(seg.frames.length / 2);
             bestFrame = seg.frames[midIdx];
+        }
+
+        // 4. Advanced Quality Analysis (Pilates)
+        let qualityReport = { score: {}, feedback: [], level: 'Beginner' };
+
+        if (seg.pose !== 'Unknown') {
+            qualityReport = analyzeSegmentQuality(seg.frames, seg.pose, seg.start_time, seg.end_time);
         }
 
         return {
@@ -228,11 +232,87 @@ function cleanSequence(rawFrames) {
             end_time: formatTime(seg.end_time),
             confidence: bestFrame.confidence,
             key_frame: bestFrame.image,
-            duration_sec: (seg.end_time - seg.start_time).toFixed(1)
+            duration_sec: (seg.end_time - seg.start_time).toFixed(1),
+            ...qualityReport // Spread score, feedback, level
         };
     });
 
     return cleaned;
+}
+
+/**
+ * Analyzes quality of a pose segment by aggregating multi-frame data.
+ */
+// [NEW] Comparison helper
+import { evaluatePose } from './poseEvaluator';
+
+function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
+    // A. Filter Frames: Remove transitions (first/last 10-15% of duration)
+    const duration = endTime - startTime;
+    const buffer = Math.min(1.0, duration * 0.15); // max 1s buffer or 15%
+
+    const stableFrames = frames.filter(f =>
+        f.time >= (startTime + buffer) &&
+        f.time <= (endTime - buffer) &&
+        f.confidence > 0.6 // Min confidence threshold
+    );
+
+    // If too few frames left, fall back to all frames with decent confidence
+    const analysisFrames = stableFrames.length > 2 ? stableFrames : frames.filter(f => f.confidence > 0.5);
+
+    if (analysisFrames.length === 0) {
+        return { score: { 'Reliability': 0 }, feedback: ['Pose detected but visibility too low for analysis.'], level: 'N/A' };
+    }
+
+    // B. Run Evaluation on each frame
+    const evaluations = analysisFrames.map(f => {
+        if (!f.landmarks) return null;
+        return evaluatePose(f.landmarks, poseName);
+    }).filter(e => e !== null);
+
+    if (evaluations.length === 0) return { score: {}, feedback: [], level: 'Unknown' };
+
+    // C. Aggregate Scores (Mean per indicator)
+    // evaluations[i].indicators = { Alignment: 80, Stability: 90, ... }
+    const scoreSums = {};
+    const scoreCounts = {};
+    const allFeedback = [];
+
+    evaluations.forEach(ev => {
+        Object.keys(ev.indicators).forEach(key => {
+            if (!scoreSums[key]) { scoreSums[key] = 0; scoreCounts[key] = 0; }
+            scoreSums[key] += ev.indicators[key];
+            scoreCounts[key]++;
+        });
+        if (ev.feedback) allFeedback.push(...ev.feedback);
+    });
+
+    const finalScores = {};
+    Object.keys(scoreSums).forEach(key => {
+        finalScores[key] = Math.round(scoreSums[key] / scoreCounts[key]);
+    });
+
+    // D. Aggregate Feedback (Deduplicate & limit)
+    // Simple dedupe
+    const uniqueFeedback = [...new Set(allFeedback)];
+    // Limit to top 3? Or return all? 
+    // The prompt asks for "Feedback textuel agrégé".
+
+    // E. Determine Level based on Global Score
+    // Calculate global mean
+    const scoreValues = Object.values(finalScores);
+    const globalMean = scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length;
+
+    let level = 'Beginner';
+    if (globalMean > 85) level = 'Advanced';
+    else if (globalMean > 70) level = 'Intermediate';
+
+    return {
+        score: finalScores,
+        feedback: uniqueFeedback.slice(0, 4), // Limit to 4 items
+        level: level,
+        global_score: Math.round(globalMean)
+    };
 }
 
 function formatTime(seconds) {

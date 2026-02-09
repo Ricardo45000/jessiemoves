@@ -217,11 +217,55 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                                         <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '10px' }}>Session Timeline</h3>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                             {sequenceData.map((item, idx) => (
-                                                <div key={idx} style={{ background: '#222', padding: '10px', borderRadius: '5px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                                    <img src={item.key_frame} alt="Keyframe" style={{ width: '60px', height: '45px', objectFit: 'cover', borderRadius: '4px' }} />
-                                                    <div>
-                                                        <div style={{ color: '#2196f3', fontSize: '13px', fontWeight: 'bold' }}>{item.pose}</div>
-                                                        <div style={{ color: '#888', fontSize: '11px' }}>{item.start_time} - {item.end_time}</div>
+                                                <div key={idx} style={{ background: '#222', padding: '15px', borderRadius: '8px', display: 'flex', gap: '15px', alignItems: 'flex-start', borderBottom: '1px solid #333' }}>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <img src={item.key_frame} alt="Keyframe" style={{ width: '100px', height: '75px', objectFit: 'cover', borderRadius: '6px' }} />
+                                                        <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '3px' }}>
+                                                            {item.duration_sec}s
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <div style={{ color: '#2196f3', fontSize: '15px', fontWeight: 'bold' }}>{item.pose}</div>
+                                                            {item.level && (
+                                                                <div style={{
+                                                                    fontSize: '11px',
+                                                                    fontWeight: 'bold',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '10px',
+                                                                    background: item.level === 'Advanced' ? '#4caf50' : item.level === 'Intermediate' ? '#ff9800' : '#2196f3',
+                                                                    color: '#fff'
+                                                                }}>
+                                                                    {item.level} ({item.global_score || 0})
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>{item.start_time} - {item.end_time}</div>
+
+                                                        {/* Feedback Section */}
+                                                        {item.feedback && item.feedback.length > 0 && (
+                                                            <div style={{ marginTop: '8px', padding: '8px', background: '#333', borderRadius: '4px' }}>
+                                                                <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '4px', textTransform: 'uppercase' }}>Review</div>
+                                                                <ul style={{ margin: 0, paddingLeft: '15px', color: '#ccc', fontSize: '12px' }}>
+                                                                    {item.feedback.map((fb, fidx) => (
+                                                                        <li key={fidx}>{fb}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Score Identifiers */}
+                                                        {item.score && (
+                                                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                                                {Object.entries(item.score).map(([key, val]) => (
+                                                                    <div key={key} style={{ fontSize: '10px', color: '#888', background: '#222', border: '1px solid #444', padding: '2px 6px', borderRadius: '3px' }}>
+                                                                        {key}: <span style={{ color: val > 80 ? '#4caf50' : '#ff9800' }}>{val}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
