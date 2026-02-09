@@ -7,9 +7,8 @@ const PremiumPage = () => {
     const handleCheckout = async () => {
         try {
             // Call backend to create checkout session
-            // Replace with your actual Price ID from Stripe Dashboard
             const response = await axios.post('/api/payment/create-checkout-session', {
-                priceId: 'price_1Q...' // PLACEHOLDER
+                priceId: 'price_1SybyvFr2PPTWHApS7yU8yXm'
             }, { withCredentials: true });
 
             if (response.data.url) {

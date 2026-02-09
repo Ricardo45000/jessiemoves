@@ -65,20 +65,40 @@ const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
                         Status: <span style={{ color: '#4caf50' }}>Active</span>
                     </p>
                 </div>
-                <button
-                    onClick={onLogout}
-                    style={{
-                        background: 'transparent',
-                        border: '1px solid #ff4081',
-                        color: '#ff4081',
-                        padding: '8px 20px',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s'
-                    }}
-                >
-                    Logout
-                </button>
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    {!user.is_premium && (
+                        <button
+                            onClick={() => window.location.href = '/premium'}
+                            style={{
+                                background: 'linear-gradient(90deg, #ff4081, #f50057)',
+                                border: 'none',
+                                color: 'white',
+                                padding: '8px 20px',
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                boxShadow: '0 4px 6px rgba(255, 64, 129, 0.3)',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            Upgrade to Premium 💎
+                        </button>
+                    )}
+                    <button
+                        onClick={onLogout}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid #666',
+                            color: '#aaa',
+                            padding: '8px 20px',
+                            borderRadius: '20px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s'
+                        }}
+                    >
+                        Logout
+                    </button>
+                </div>
             </header>
 
             {/* Quick Actions */}
