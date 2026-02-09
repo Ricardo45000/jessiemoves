@@ -3,14 +3,15 @@ const router = express.Router();
 const Stripe = require('stripe');
 const User = require('../models/User');
 
-console.log('Attempting to initialize Stripe...');
-if (!process.env.STRIPE_SECRET_KEY) {
-    console.error('CRITICAL ERROR: STRIPE_SECRET_KEY is missing from environment variables!');
-} else {
-    console.log('STRIPE_SECRET_KEY found. Initializing...');
-}
+const User = require('../models/User');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe;
+if (process.env.STRIPE_SECRET_KEY) {
+    console.log('STRIPE_SECRET_KEY found. Initializing Stripe...');
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+} else {
+    console.error('CRITICAL WARNING: STRIPE_SECRET_KEY is missing. Payment features will be disabled.');
+}
 
 // Middleware to protect routes (optional, if you want only logged-in users to buy)
 // For now, we'll assume the frontend sends the userId or we decode the token here
@@ -35,6 +36,9 @@ const protect = async (req, res, next) => {
 // @desc    Create a Stripe Checkout Session
 // @access  Private
 router.post('/create-checkout-session', protect, async (req, res) => {
+    if (!stripe) {
+        return res.status(500).json({ error: 'Payment system not configured (Missing Stripe Key)' });
+    }
     try {
         const { priceId } = req.body; // e.g., 'price_1P...'
         const user = req.user;
@@ -65,6 +69,9 @@ router.post('/create-checkout-session', protect, async (req, res) => {
 // @desc    Handle Stripe Webhooks
 // @access  Public (Stripe calls this)
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe) {
+        return res.status(500).send('Payment system not configured (Missing Stripe Key)');
+    }
     const sig = req.headers['stripe-signature'];
     let event;
 
