@@ -130,6 +130,46 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
         canvasCtx.restore();
     };
 
+    // [NEW] Trigger Full Sequence Analysis
+    const handleAnalyzeSequence = async () => {
+        if (!mediaRef.current || type !== 'video') return;
+
+        setIsAnalyzing(true);
+        setAnalysisProgress(0);
+        setSequenceData(null);
+
+        // Pause live loop
+        mediaRef.current.pause();
+
+        try {
+            const pose = new Pose({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+                },
+            });
+            pose.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5,
+            });
+            await pose.initialize();
+
+            const result = await analyzeVideoSequence(mediaRef.current, pose, (progress) => {
+                setAnalysisProgress(progress);
+            });
+
+            setSequenceData(result.posture_sequence);
+            pose.close();
+
+        } catch (err) {
+            console.error("Sequence Analysis Failed:", err);
+            alert("Analysis failed. Please try again.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     return (
         <div className="media-analysis-container" style={{ position: 'relative', width: '100%', height: '100vh', background: '#222', display: 'flex', flexDirection: 'row' }}>
 
