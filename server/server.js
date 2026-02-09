@@ -18,10 +18,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Routes
-// const paymentRoutes = require('./routes/paymentRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Stripe Webhook must be before express.json() because it needs raw body
-// app.use('/api/payment', paymentRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Middleware
 app.use(express.json());
