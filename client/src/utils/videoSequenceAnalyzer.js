@@ -437,42 +437,7 @@ function generateSessionSummary(sequenceData) {
         advancedMetrics // [NEW]
     };
 }
-/**
- * Advanced Dynamic Metrics (Pilates)
- * Calculates Stability, Endurance, Fluidity, and Consistency.
- */
-function calculateDynamicMetrics(sequenceData) {
-    if (!sequenceData || sequenceData.length === 0) return null;
 
-    let totalStability = 0;
-    let totalEndurance = 0;
-    let totalFluidity = 0;
-    let stabilityCount = 0;
-    let enduranceCount = 0;
-    let fluidityCount = 0;
-
-    // specific pose consistency
-    const poseGroups = {};
-
-    sequenceData.forEach(item => {
-        // 1. Consistency grouping
-        if (!poseGroups[item.pose]) poseGroups[item.pose] = [];
-        poseGroups[item.pose].push(item.global_score || 0);
-
-        // We need access to frames for Stability/Endurance/Fluidity
-        // But sequenceData items (from cleanSequence) don't have frames attached!
-        // CRITICAL FIX: We need to attach 'frames' (or analysisStats from them) to the cleaned sequence item
-        // or re-process.
-        // For now, let's assume we can pass 'seg.frames' into 'analyzeSegmentQuality' and getting these metrics out.
-    });
-
-    // ... Logic requires refactoring cleanSequence ...
-    return {};
-}
 
 // Helper to calculate variance
-function calculateVariance(values) {
-    if (values.length === 0) return 0;
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    return values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
-}
+
