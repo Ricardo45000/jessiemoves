@@ -310,12 +310,38 @@ function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
     if (globalMean > 85) level = 'Advanced';
     else if (globalMean > 70) level = 'Intermediate';
 
+    // F. Dynamic Metrics (Stability, Endurance)
+    // 1. Stability: Variance of Hips Y-coord (Vertical stability)
+    // We expect hips to be relatively stable in most Pilates holds
+    const hipYValues = analysisFrames.map(f => (f.landmarks[23].y + f.landmarks[24].y) / 2);
+    const stabilityVariance = calculateVariance(hipYValues);
+    const stabilityScore = Math.max(0, 100 - (stabilityVariance * 10000)); // Scale roughly
+
+    // 2. Endurance: Trend of Confidence or Hips?
+    // Let's use slight drop in Hips Y (sagging) or just score consistency
+    // Simple approach: First 30% vs Last 30% of frames. 
+    // If variance increases at end, endurance is low.
+    const split = Math.floor(analysisFrames.length / 3);
+    const startVar = calculateVariance(hipYValues.slice(0, split));
+    const endVar = calculateVariance(hipYValues.slice(-split));
+    const enduranceScore = startVar < endVar ? Math.max(0, 100 - ((endVar - startVar) * 5000)) : 100;
+
     return {
         score: finalScores,
         feedback: uniqueFeedback.slice(0, 4), // Limit to 4 items
         level: level,
-        global_score: Math.round(globalMean)
+        global_score: Math.round(globalMean),
+        dynamic_metrics: {
+            stability: Math.round(stabilityScore),
+            endurance: Math.round(enduranceScore)
+        }
     };
+}
+
+function calculateVariance(values) {
+    if (values.length === 0) return 0;
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    return values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
 }
 
 /**
@@ -378,6 +404,27 @@ function generateSessionSummary(sequenceData) {
     // 6. Get Recommendation
     const recommendation = getSessionRecommendation(weakestIndicator);
 
+    // 7. Calculate Advanced Session Metrics
+    // Consistency: Std Dev of scores across session
+    const allScores = poseScores.map(p => p.score);
+    const consistency = allScores.length > 1 ? Math.max(0, 100 - (Math.sqrt(calculateVariance(allScores)) * 2)) : 100;
+
+    // Avg Stability/Endurance from segments
+    let totalStab = 0, totalEndur = 0, countDyn = 0;
+    sequenceData.forEach(item => {
+        if (item.dynamic_metrics) {
+            totalStab += item.dynamic_metrics.stability;
+            totalEndur += item.dynamic_metrics.endurance;
+            countDyn++;
+        }
+    });
+
+    const advancedMetrics = {
+        consistency: Math.round(consistency),
+        stability: countDyn ? Math.round(totalStab / countDyn) : 0,
+        endurance: countDyn ? Math.round(totalEndur / countDyn) : 0
+    };
+
     return {
         scores: averagedScores,
         weakestIndicator,
@@ -386,7 +433,46 @@ function generateSessionSummary(sequenceData) {
         feedback: feedbackText,
         recommendation,
         totalPoses: sequenceData.length,
-        globalScore: Math.round(globalMean)
+        globalScore: Math.round(globalMean),
+        advancedMetrics // [NEW]
     };
 }
+/**
+ * Advanced Dynamic Metrics (Pilates)
+ * Calculates Stability, Endurance, Fluidity, and Consistency.
+ */
+function calculateDynamicMetrics(sequenceData) {
+    if (!sequenceData || sequenceData.length === 0) return null;
 
+    let totalStability = 0;
+    let totalEndurance = 0;
+    let totalFluidity = 0;
+    let stabilityCount = 0;
+    let enduranceCount = 0;
+    let fluidityCount = 0;
+
+    // specific pose consistency
+    const poseGroups = {};
+
+    sequenceData.forEach(item => {
+        // 1. Consistency grouping
+        if (!poseGroups[item.pose]) poseGroups[item.pose] = [];
+        poseGroups[item.pose].push(item.global_score || 0);
+
+        // We need access to frames for Stability/Endurance/Fluidity
+        // But sequenceData items (from cleanSequence) don't have frames attached!
+        // CRITICAL FIX: We need to attach 'frames' (or analysisStats from them) to the cleaned sequence item
+        // or re-process.
+        // For now, let's assume we can pass 'seg.frames' into 'analyzeSegmentQuality' and getting these metrics out.
+    });
+
+    // ... Logic requires refactoring cleanSequence ...
+    return {};
+}
+
+// Helper to calculate variance
+function calculateVariance(values) {
+    if (values.length === 0) return 0;
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    return values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+}

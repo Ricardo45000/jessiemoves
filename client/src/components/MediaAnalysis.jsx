@@ -246,11 +246,28 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
 
                                             {/* Recommendation */}
                                             {sessionSummary.recommendation && (
-                                                <div style={{ background: '#333', padding: '10px', borderRadius: '4px', borderLeft: '3px solid #e91e63' }}>
+                                                <div style={{ background: '#333', padding: '10px', borderRadius: '4px', borderLeft: '3px solid #e91e63', marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '10px', color: '#ff4081', fontWeight: 'bold', textTransform: 'uppercase' }}>Recommended for you</div>
                                                     <div style={{ color: 'white', fontWeight: 'bold', fontSize: '13px' }}>{sessionSummary.recommendation.title}</div>
                                                     <div style={{ color: '#bbb', fontSize: '11px', marginTop: '2px' }}>{sessionSummary.recommendation.description}</div>
                                                     <a href={sessionSummary.recommendation.media} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '5px', fontSize: '11px', color: '#2196f3', textDecoration: 'none' }}>► Watch Tutorial</a>
+                                                </div>
+                                            )}
+
+                                            {/* [NEW] Advanced Metrics Bars */}
+                                            {sessionSummary.advancedMetrics && (
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                                                    {Object.entries(sessionSummary.advancedMetrics).map(([key, val]) => (
+                                                        <div key={key}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                                                <span style={{ color: '#aaa', fontSize: '10px', textTransform: 'capitalize' }}>{key}</span>
+                                                                <span style={{ color: '#fff', fontSize: '10px' }}>{val}%</span>
+                                                            </div>
+                                                            <div style={{ height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+                                                                <div style={{ height: '100%', width: `${val}%`, background: val > 80 ? '#4caf50' : val > 60 ? '#ff9800' : '#f44336' }}></div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
