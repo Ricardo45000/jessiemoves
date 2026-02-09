@@ -4,6 +4,7 @@ import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { classifyPose } from '../utils/poseClassifier';
 import { evaluatePose } from '../utils/poseEvaluator';
 import { getRecommendation } from '../utils/recommendationEngine';
+import { analyzeVideoSequence } from '../utils/videoSequenceAnalyzer';   // [NEW]
 import FeedbackRadar from './FeedbackRadar';
 import ScoreCard from './ScoreCard';
 
@@ -11,6 +12,11 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
     const mediaRef = useRef(null); // img or video element
     const canvasRef = useRef(null);
     const [isLoaded, setIsLoaded] = useState(false);
+
+    // Sequence Analysis State
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisProgress, setAnalysisProgress] = useState(0);
+    const [sequenceData, setSequenceData] = useState(null);
 
     // New State for Dashboard
     const [dashboardData, setDashboardData] = useState(null);
@@ -145,6 +151,51 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                             level={dashboardData.level}
                             tip={dashboardData.prioritizedTip}
                         />
+
+                        {/* [NEW] Sequence Analysis Button & Results */}
+                        {type === 'video' && (
+                            <div style={{ marginTop: '20px', borderTop: '1px solid #333', paddingTop: '20px' }}>
+                                {!sequenceData ? (
+                                    <button
+                                        onClick={handleAnalyzeSequence}
+                                        disabled={isAnalyzing}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px',
+                                            background: isAnalyzing ? '#444' : 'linear-gradient(90deg, #ff4081, #f50057)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '5px',
+                                            cursor: isAnalyzing ? 'wait' : 'pointer',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {isAnalyzing ? `Analyzing... ${analysisProgress}%` : 'Generate Full Session Report 📊'}
+                                    </button>
+                                ) : (
+                                    <div>
+                                        <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '10px' }}>Session Timeline</h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            {sequenceData.map((item, idx) => (
+                                                <div key={idx} style={{ background: '#222', padding: '10px', borderRadius: '5px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <img src={item.key_frame} alt="Keyframe" style={{ width: '60px', height: '45px', objectFit: 'cover', borderRadius: '4px' }} />
+                                                    <div>
+                                                        <div style={{ color: '#2196f3', fontSize: '13px', fontWeight: 'bold' }}>{item.pose}</div>
+                                                        <div style={{ color: '#888', fontSize: '11px' }}>{item.start_time} - {item.end_time}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => setSequenceData(null)}
+                                            style={{ marginTop: '10px', width: '100%', padding: '8px', background: '#333', color: '#aaa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                                        >
+                                            Reset Analysis
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div style={{ marginTop: '20px' }}>
                             <h3 style={{ color: '#aaa', fontSize: '14px', textTransform: 'uppercase' }}>Performance Analysis</h3>
