@@ -2,12 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import { classifyPose } from '../utils/poseClassifier';
 import { evaluatePose } from '../utils/poseEvaluator';
 import { getRecommendation } from '../utils/recommendationEngine';
-import { analyzeVideoSequence } from '../utils/videoSequenceAnalyzer';   // [NEW]
+import { analyzeVideoSequence } from '../utils/videoSequenceAnalyzer';
+import { generateSessionReport } from '../utils/pdfGenerator';
 import FeedbackRadar from './FeedbackRadar';
 import ScoreCard from './ScoreCard';
 
 const MediaAnalysis = ({ fileUrl, type, onBack }) => {
-    const mediaRef = useRef(null); // img or video element
+    const mediaRef = useRef(null);
     const canvasRef = useRef(null);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -15,14 +16,13 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisProgress, setAnalysisProgress] = useState(0);
     const [sequenceData, setSequenceData] = useState(null);
-    const [sessionSummary, setSessionSummary] = useState(null); // [NEW]
+    const [sessionSummary, setSessionSummary] = useState(null);
 
     // New State for Dashboard
     const [dashboardData, setDashboardData] = useState(null);
     const [recommendation, setRecommendation] = useState(null);
 
     useEffect(() => {
-        // Access CDN-loaded globals
         const { Pose, POSE_CONNECTIONS } = window;
         const { drawConnectors, drawLandmarks } = window;
 
@@ -120,7 +120,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
 
             if (classification && classification.name !== 'Unknown') {
                 const evaluation = evaluatePose(results.poseLandmarks, classification.name);
-                setDashboardData(evaluation); // Update React State for Side Panel
+                setDashboardData(evaluation);
 
                 // Get Recommendation
                 if (evaluation) {
@@ -133,7 +133,6 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
         canvasCtx.restore();
     };
 
-    // [NEW] Trigger Full Sequence Analysis
     const handleAnalyzeSequence = async () => {
         if (!mediaRef.current || type !== 'video') return;
 
@@ -164,7 +163,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
             });
 
             setSequenceData(result.posture_sequence);
-            setSessionSummary(result.session_summary); // [NEW]
+            setSessionSummary(result.session_summary);
             pose.close();
 
         } catch (err) {
@@ -197,7 +196,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                             tip={dashboardData.prioritizedTip}
                         />
 
-                        {/* [NEW] Sequence Analysis Button & Results */}
+                        {/* Sequence Analysis Button & Results */}
                         {type === 'video' && (
                             <div style={{ marginTop: '20px', borderTop: '1px solid #333', paddingTop: '20px' }}>
                                 {!sequenceData ? (
@@ -212,17 +211,33 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                                             border: 'none',
                                             borderRadius: '5px',
                                             cursor: isAnalyzing ? 'wait' : 'pointer',
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
+                                            marginBottom: '10px'
                                         }}
                                     >
                                         {isAnalyzing ? `Analyzing... ${analysisProgress}%` : 'Generate Full Session Report 📊'}
                                     </button>
                                 ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <button
+                                            onClick={() => generateSessionReport(sessionSummary, sequenceData)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                background: '#4caf50',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '5px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            Download Pro Report (PDF) 📄
+                                        </button>
 
-                                    <div>
-                                        {/* [NEW] Session Summary Card */}
-                                        {
-                                            sessionSummary && (
+                                        <div>
+                                            {/* Session Summary Card */}
+                                            {sessionSummary && (
                                                 <div style={{ background: '#1a1a2e', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #333' }}>
                                                     <h3 style={{ color: '#fff', fontSize: '16px', margin: '0 0 10px 0', borderBottom: '1px solid #444', paddingBottom: '5px' }}>
                                                         Session Report 📋
@@ -257,7 +272,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                                                         </div>
                                                     )}
 
-                                                    {/* [NEW] Advanced Metrics Bars */}
+                                                    {/* Advanced Metrics Bars */}
                                                     {sessionSummary.advancedMetrics && (
                                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                                                             {Object.entries(sessionSummary.advancedMetrics).map(([key, val]) => (
@@ -274,71 +289,71 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                                                         </div>
                                                     )}
                                                 </div>
-                                            )
-                                        }
+                                            )}
 
-                                        <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '10px' }}>Session Timeline</h3>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            {sequenceData.map((item, idx) => (
-                                                <div key={idx} style={{ background: '#222', padding: '15px', borderRadius: '8px', display: 'flex', gap: '15px', alignItems: 'flex-start', borderBottom: '1px solid #333' }}>
-                                                    <div style={{ position: 'relative' }}>
-                                                        <img src={item.key_frame} alt="Keyframe" style={{ width: '100px', height: '75px', objectFit: 'cover', borderRadius: '6px' }} />
-                                                        <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '3px' }}>
-                                                            {item.duration_sec}s
+                                            <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '10px' }}>Session Timeline</h3>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {sequenceData.map((item, idx) => (
+                                                    <div key={idx} style={{ background: '#222', padding: '15px', borderRadius: '8px', display: 'flex', gap: '15px', alignItems: 'flex-start', borderBottom: '1px solid #333' }}>
+                                                        <div style={{ position: 'relative' }}>
+                                                            <img src={item.key_frame} alt="Keyframe" style={{ width: '100px', height: '75px', objectFit: 'cover', borderRadius: '6px' }} />
+                                                            <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '3px' }}>
+                                                                {item.duration_sec}s
+                                                            </div>
                                                         </div>
-                                                    </div>
 
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <div style={{ color: '#2196f3', fontSize: '15px', fontWeight: 'bold' }}>{item.pose}</div>
-                                                            {item.level && (
-                                                                <div style={{
-                                                                    fontSize: '11px',
-                                                                    fontWeight: 'bold',
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '10px',
-                                                                    background: item.level === 'Advanced' ? '#4caf50' : item.level === 'Intermediate' ? '#ff9800' : '#2196f3',
-                                                                    color: '#fff'
-                                                                }}>
-                                                                    {item.level} ({item.global_score || 0})
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <div style={{ color: '#2196f3', fontSize: '15px', fontWeight: 'bold' }}>{item.pose}</div>
+                                                                {item.level && (
+                                                                    <div style={{
+                                                                        fontSize: '11px',
+                                                                        fontWeight: 'bold',
+                                                                        padding: '2px 8px',
+                                                                        borderRadius: '10px',
+                                                                        background: item.level === 'Advanced' ? '#4caf50' : item.level === 'Intermediate' ? '#ff9800' : '#2196f3',
+                                                                        color: '#fff'
+                                                                    }}>
+                                                                        {item.level} ({item.global_score || 0})
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>{item.start_time} - {item.end_time}</div>
+
+                                                            {/* Feedback Section */}
+                                                            {item.feedback && item.feedback.length > 0 && (
+                                                                <div style={{ marginTop: '8px', padding: '8px', background: '#333', borderRadius: '4px' }}>
+                                                                    <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '4px', textTransform: 'uppercase' }}>Review</div>
+                                                                    <ul style={{ margin: 0, paddingLeft: '15px', color: '#ccc', fontSize: '12px' }}>
+                                                                        {item.feedback.map((fb, fidx) => (
+                                                                            <li key={fidx}>{fb}</li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Score Identifiers */}
+                                                            {item.score && (
+                                                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                                                    {Object.entries(item.score).map(([key, val]) => (
+                                                                        <div key={key} style={{ fontSize: '10px', color: '#888', background: '#222', border: '1px solid #444', padding: '2px 6px', borderRadius: '3px' }}>
+                                                                            {key}: <span style={{ color: val > 80 ? '#4caf50' : '#ff9800' }}>{val}</span>
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             )}
                                                         </div>
-
-                                                        <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>{item.start_time} - {item.end_time}</div>
-
-                                                        {/* Feedback Section */}
-                                                        {item.feedback && item.feedback.length > 0 && (
-                                                            <div style={{ marginTop: '8px', padding: '8px', background: '#333', borderRadius: '4px' }}>
-                                                                <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '4px', textTransform: 'uppercase' }}>Review</div>
-                                                                <ul style={{ margin: 0, paddingLeft: '15px', color: '#ccc', fontSize: '12px' }}>
-                                                                    {item.feedback.map((fb, fidx) => (
-                                                                        <li key={fidx}>{fb}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Score Identifiers */}
-                                                        {item.score && (
-                                                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                                                                {Object.entries(item.score).map(([key, val]) => (
-                                                                    <div key={key} style={{ fontSize: '10px', color: '#888', background: '#222', border: '1px solid #444', padding: '2px 6px', borderRadius: '3px' }}>
-                                                                        {key}: <span style={{ color: val > 80 ? '#4caf50' : '#ff9800' }}>{val}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => setSequenceData(null)}
+                                                style={{ marginTop: '10px', width: '100%', padding: '8px', background: '#333', color: '#aaa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                                            >
+                                                Reset Analysis
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => setSequenceData(null)}
-                                            style={{ marginTop: '10px', width: '100%', padding: '8px', background: '#333', color: '#aaa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-                                        >
-                                            Reset Analysis
-                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -389,7 +404,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                     />
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 
