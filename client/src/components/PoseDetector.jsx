@@ -9,65 +9,51 @@ const PoseDetector = () => {
     const [cameraActive, setCameraActive] = useState(false);
     const [detectedPose, setDetectedPose] = useState(null);
     const [poseFeedback, setPoseFeedback] = useState(null);
-    const [loading, setLoading] = useState(true);
 
-    // Initialize Pose on mount with dynamic imports
+    // Initialize Pose on mount using CDN-loaded globals
     useEffect(() => {
-        let cancelled = false;
+        const { Pose, POSE_CONNECTIONS } = window;
+        const { Camera } = window;
+        const { drawConnectors, drawLandmarks } = window;
 
-        async function init() {
-            // Dynamic imports for MediaPipe (Closure Library modules)
-            const poseModule = await import('@mediapipe/pose');
-            const cameraModule = await import('@mediapipe/camera_utils');
-            const drawingModule = await import('@mediapipe/drawing_utils');
-
-            const Pose = poseModule.Pose || poseModule.default?.Pose;
-            const POSE_CONNECTIONS = poseModule.POSE_CONNECTIONS || poseModule.default?.POSE_CONNECTIONS;
-            const Camera = cameraModule.Camera || cameraModule.default?.Camera;
-            const drawConnectors = drawingModule.drawConnectors || drawingModule.default?.drawConnectors;
-            const drawLandmarks = drawingModule.drawLandmarks || drawingModule.default?.drawLandmarks;
-
-            if (cancelled) return;
-            setLoading(false);
-
-            const pose = new Pose({
-                locateFile: (file) => {
-                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-                },
-            });
-
-            pose.setOptions({
-                modelComplexity: 1,
-                smoothLandmarks: true,
-                enableSegmentation: false,
-                smoothSegmentation: false,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5,
-            });
-
-            pose.onResults((results) => onResults(results, drawConnectors, drawLandmarks, POSE_CONNECTIONS));
-
-            if (
-                typeof webcamRef.current !== 'undefined' &&
-                webcamRef.current !== null
-            ) {
-                const camera = new Camera(webcamRef.current.video, {
-                    onFrame: async () => {
-                        if (webcamRef.current && webcamRef.current.video) {
-                            await pose.send({ image: webcamRef.current.video });
-                        }
-                    },
-                    width: 1280,
-                    height: 720,
-                });
-                camera.start();
-                setCameraActive(true);
-            }
+        if (!Pose || !Camera) {
+            console.error('MediaPipe not loaded. Ensure CDN scripts are in index.html.');
+            return;
         }
 
-        init().catch(console.error);
+        const pose = new Pose({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+            },
+        });
 
-        return () => { cancelled = true; };
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            smoothSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+        });
+
+        pose.onResults((results) => onResults(results, drawConnectors, drawLandmarks, POSE_CONNECTIONS));
+
+        if (
+            typeof webcamRef.current !== 'undefined' &&
+            webcamRef.current !== null
+        ) {
+            const camera = new Camera(webcamRef.current.video, {
+                onFrame: async () => {
+                    if (webcamRef.current && webcamRef.current.video) {
+                        await pose.send({ image: webcamRef.current.video });
+                    }
+                },
+                width: 1280,
+                height: 720,
+            });
+            camera.start();
+            setCameraActive(true);
+        }
     }, []);
 
     const onResults = (results, drawConnectors, drawLandmarks, POSE_CONNECTIONS) => {
