@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-console.log('DEBUG: AuthRoutes loaded User model:', User);
 
 // Helper to generate Token
 const generateToken = (id) => {
@@ -44,8 +43,8 @@ router.post('/register', async (req, res) => {
             const token = generateToken(user._id);
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                secure: false, // Disable secure for HTTP IP access
+                sameSite: 'lax', // Relax for redirects (Stripe, etc.)
                 maxAge: 30 * 24 * 60 * 60 * 1000
             });
 
