@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+console.log('DEBUG: AuthRoutes loaded User model:', User);
 
 // Helper to generate Token
 const generateToken = (id) => {
