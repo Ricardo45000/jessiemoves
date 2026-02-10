@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Webcam from 'react-webcam';
-import { Pose, POSE_CONNECTIONS } from '@mediapipe/pose';
-import { Camera } from '@mediapipe/camera_utils';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
+import poseModule from '@mediapipe/pose';
+const { Pose, POSE_CONNECTIONS } = poseModule;
+import cameraModule from '@mediapipe/camera_utils';
+const { Camera } = cameraModule;
+import drawingModule from '@mediapipe/drawing_utils';
+const { drawConnectors, drawLandmarks } = drawingModule;
 import { classifyPose } from '../utils/poseClassifier';
 import { evaluatePose } from '../utils/poseEvaluator';
 

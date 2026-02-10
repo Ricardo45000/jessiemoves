@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Pose, POSE_CONNECTIONS } from '@mediapipe/pose';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
+import poseModule from '@mediapipe/pose';
+const { Pose, POSE_CONNECTIONS } = poseModule;
+import drawingModule from '@mediapipe/drawing_utils';
+const { drawConnectors, drawLandmarks } = drawingModule;
 import { classifyPose } from '../utils/poseClassifier';
 import { evaluatePose } from '../utils/poseEvaluator';
 import { getRecommendation } from '../utils/recommendationEngine';
