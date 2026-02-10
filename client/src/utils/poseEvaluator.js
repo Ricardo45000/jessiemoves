@@ -121,7 +121,7 @@ function evaluateTheHundred(landmarks, evaluation) {
 
     // Leg straightness
     const legAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-    const extensionScore = Math.min(100, LegAngle = (legAngle / 180) * 100);
+    const extensionScore = Math.min(100, (legAngle / 180) * 100);
     evaluation.indicators.Extension = extensionScore;
 
     if (legAngle < 160) {
