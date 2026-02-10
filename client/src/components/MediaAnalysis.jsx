@@ -1,8 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react';
-import poseModule from '@mediapipe/pose';
-const { Pose, POSE_CONNECTIONS } = poseModule;
-import drawingModule from '@mediapipe/drawing_utils';
-const { drawConnectors, drawLandmarks } = drawingModule;
 import { classifyPose } from '../utils/poseClassifier';
 import { evaluatePose } from '../utils/poseEvaluator';
 import { getRecommendation } from '../utils/recommendationEngine';
@@ -15,6 +11,9 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
     const canvasRef = useRef(null);
     const [isLoaded, setIsLoaded] = useState(false);
 
+    // MediaPipe references (loaded dynamically)
+    const mpRef = useRef({ Pose: null, POSE_CONNECTIONS: null, drawConnectors: null, drawLandmarks: null });
+
     // Sequence Analysis State
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -26,78 +25,94 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
     const [recommendation, setRecommendation] = useState(null);
 
     useEffect(() => {
-        const pose = new Pose({
-            locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-            },
-        });
+        let cancelled = false;
 
-        pose.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            enableSegmentation: false,
-            smoothSegmentation: false,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5,
-        });
+        async function init() {
+            // Dynamic imports for MediaPipe (Closure Library modules)
+            const poseModule = await import('@mediapipe/pose');
+            const drawingModule = await import('@mediapipe/drawing_utils');
 
-        pose.onResults(onResults);
+            const Pose = poseModule.Pose || poseModule.default?.Pose;
+            const POSE_CONNECTIONS = poseModule.POSE_CONNECTIONS || poseModule.default?.POSE_CONNECTIONS;
+            const drawConnectors = drawingModule.drawConnectors || drawingModule.default?.drawConnectors;
+            const drawLandmarks = drawingModule.drawLandmarks || drawingModule.default?.drawLandmarks;
 
-        const processFrame = async () => {
-            if (mediaRef.current && canvasRef.current) {
-                // Adjust canvas to match media dimensions
-                const media = mediaRef.current;
+            // Store for use in other functions
+            mpRef.current = { Pose, POSE_CONNECTIONS, drawConnectors, drawLandmarks };
 
-                if (media.videoWidth) { // It's a video
-                    canvasRef.current.width = media.videoWidth;
-                    canvasRef.current.height = media.videoHeight;
-                } else if (media.naturalWidth) { // It's an image
-                    canvasRef.current.width = media.naturalWidth;
-                    canvasRef.current.height = media.naturalHeight;
+            if (cancelled) return;
+
+            const pose = new Pose({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+                },
+            });
+
+            pose.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                enableSegmentation: false,
+                smoothSegmentation: false,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5,
+            });
+
+            pose.onResults((results) => onResults(results, drawConnectors, drawLandmarks, POSE_CONNECTIONS));
+
+            const processFrame = async () => {
+                if (mediaRef.current && canvasRef.current) {
+                    const media = mediaRef.current;
+                    if (media.videoWidth) {
+                        canvasRef.current.width = media.videoWidth;
+                        canvasRef.current.height = media.videoHeight;
+                    } else if (media.naturalWidth) {
+                        canvasRef.current.width = media.naturalWidth;
+                        canvasRef.current.height = media.naturalHeight;
+                    }
+                    await pose.send({ image: media });
+                    if (type === 'video' && !media.paused && !media.ended) {
+                        requestAnimationFrame(processFrame);
+                    }
                 }
+            };
 
-                await pose.send({ image: media });
-
-                if (type === 'video' && !media.paused && !media.ended) {
-                    requestAnimationFrame(processFrame);
+            if (type === 'image') {
+                const img = mediaRef.current;
+                if (img) {
+                    if (img.complete) {
+                        processFrame();
+                    } else {
+                        img.onload = processFrame;
+                    }
+                }
+            } else if (type === 'video') {
+                const vid = mediaRef.current;
+                if (vid) {
+                    vid.onloadeddata = () => {
+                        setIsLoaded(true);
+                        vid.addEventListener('play', () => {
+                            const loop = async () => {
+                                if (!vid.paused && !vid.ended) {
+                                    await processFrame();
+                                    requestAnimationFrame(loop);
+                                }
+                            };
+                            loop();
+                        });
+                    };
                 }
             }
-        };
 
-        if (type === 'image') {
-            const img = mediaRef.current;
-            if (img) {
-                if (img.complete) {
-                    processFrame();
-                } else {
-                    img.onload = processFrame;
-                }
-            }
-        } else if (type === 'video') {
-            const vid = mediaRef.current;
-            if (vid) {
-                vid.onloadeddata = () => {
-                    setIsLoaded(true);
-                    // Loop processFrame when playing
-                    vid.addEventListener('play', () => {
-                        const loop = async () => {
-                            if (!vid.paused && !vid.ended) {
-                                await processFrame();
-                                requestAnimationFrame(loop);
-                            }
-                        };
-                        loop();
-                    });
-                };
-            }
+            return () => {
+                pose.close();
+            };
         }
 
-        return () => {
-            pose.close();
-        };
+        init().catch(console.error);
+        return () => { cancelled = true; };
     }, [fileUrl, type]);
 
-    const onResults = (results) => {
+    const onResults = (results, drawConnectors, drawLandmarks, POSE_CONNECTIONS) => {
         if (!canvasRef.current || !mediaRef.current) return;
 
         const canvasCtx = canvasRef.current.getContext('2d');
@@ -145,6 +160,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
         mediaRef.current.pause();
 
         try {
+            const { Pose } = mpRef.current;
             const pose = new Pose({
                 locateFile: (file) => {
                     return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
