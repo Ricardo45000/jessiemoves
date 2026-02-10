@@ -12,9 +12,9 @@ import './App.css';
 import Dashboard from './components/Dashboard';
 
 // Main Application Component (Protected)
-const MainApp = () => {
+const MainApp = ({ initialMode = 'home' }) => {
   const { user, logout } = useContext(AuthContext);
-  const [appMode, setAppMode] = useState('home'); // home, live, upload, analysis
+  const [appMode, setAppMode] = useState(initialMode); // home, live, upload, analysis
   const [selectedMedia, setSelectedMedia] = useState(null);
 
   // Handle internal modes (Dashboard vs Tools)
@@ -124,7 +124,16 @@ const AppRoutes = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <MainApp />
+            <MainApp initialMode="home" />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/upload"
+        element={
+          <ProtectedRoute>
+            <MainApp initialMode="upload" />
           </ProtectedRoute>
         }
       />
