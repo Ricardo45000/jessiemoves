@@ -17,35 +17,36 @@ const LoginPage = ({ onSwitchToRegister }) => {
     };
 
     return (
-        <div className="auth-container" style={{ color: 'white', maxWidth: '400px', margin: '0 auto', textAlign: 'center', paddingTop: '50px' }}>
-            <h2>Welcome Back</h2>
-            {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
+        <div className="auth-page">
+            <div className="auth-container">
+                <h2>Welcome Back</h2>
+                {error && <div className="auth-error">{error}</div>}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={{ padding: '10px', borderRadius: '5px', border: 'none' }}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={{ padding: '10px', borderRadius: '5px', border: 'none' }}
-                />
-                <button type="submit" style={{ padding: '10px', background: '#ff4081', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-                    Login
-                </button>
-            </form>
+                <form onSubmit={handleSubmit} className="auth-form">
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    <button type="submit" className="btn-auth pink">
+                        Login
+                    </button>
+                </form>
 
-            <p style={{ marginTop: '20px' }}>
-                Don't have an account? <span onClick={onSwitchToRegister} style={{ color: '#2196f3', cursor: 'pointer', textDecoration: 'underline' }}>Register here</span>
-            </p>
+                <p className="auth-switch">
+                    Don't have an account?{' '}
+                    <a className="blue" onClick={onSwitchToRegister}>Register here</a>
+                </p>
+            </div>
         </div>
     );
 };

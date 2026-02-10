@@ -5,7 +5,7 @@ import './LandingPage.css';
 const LandingPage = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
-    const [status, setStatus] = useState(null); // 'loading', 'success', 'error'
+    const [status, setStatus] = useState(null);
 
     const handleSubscribe = async (e) => {
         e.preventDefault();
@@ -30,8 +30,6 @@ const LandingPage = () => {
 
     return (
         <div className="landing-container">
-            {/* Header / Nav would go here */}
-
             {/* Hero Section */}
             <header className="hero-section">
                 <h1 className="hero-title">
@@ -51,51 +49,50 @@ const LandingPage = () => {
                     </a>
                 </div>
 
-                {/* Visual Placeholder - Ideally replaced with a real demo screenshot */}
                 <div className="hero-visual">
                     <div style={{ color: 'white', textAlign: 'center' }}>
-                        <h2>🤖 AI Posture Analysis Demo</h2>
-                        <p>(Dashboard Preview)</p>
+                        <h2>🤖 AI Posture Analysis</h2>
+                        <p>Real-time Pilates coaching</p>
                     </div>
                 </div>
             </header>
 
-            {/* Problem / Solution Section */}
+            {/* Features */}
             <section className="features-section">
                 <h2 className="section-title">Why JessieMoves?</h2>
                 <div className="features-grid">
                     <div className="feature-card">
                         <span className="feature-icon">🔍</span>
                         <h3>Instant Feedback</h3>
-                        <p>No more guessing. Our AI analyzes your alignment in real-time and tells you exactly what to fix.</p>
+                        <p>Our AI analyzes your alignment in real-time and tells you exactly what to fix.</p>
                     </div>
                     <div className="feature-card">
                         <span className="feature-icon">🏠</span>
                         <h3>Practice Anywhere</h3>
-                        <p>Your personal Pilates coach is always with you. All you need is a laptop and a webcam.</p>
+                        <p>Your personal Pilates coach is always with you. All you need is a camera.</p>
                     </div>
                     <div className="feature-card">
                         <span className="feature-icon">📈</span>
                         <h3>Track Progress</h3>
-                        <p>Visualize your improvement over time with detailed history charts and scores.</p>
+                        <p>Visualize your improvement over time with detailed charts and scores.</p>
                     </div>
                     <div className="feature-card">
                         <span className="feature-icon">🤸‍♀️</span>
-                        <h3>Pilates Focus</h3>
-                        <p>Specialized tailored classifiers for key movements like The Hundred, Roll-Up, and more.</p>
+                        <h3>34 Exercises</h3>
+                        <p>All classical Pilates mat exercises from Return to Life Through Contrology.</p>
                     </div>
                 </div>
             </section>
 
-            {/* Waitlist Section */}
+            {/* Waitlist */}
             <section id="beta" className="roadmap-section">
                 <h2>Join the Revolution</h2>
-                <p style={{ maxWidth: '600px', margin: '20px auto', color: '#e0e0e0' }}>
-                    We are building the future of home fitness. Join our private beta to get early access to new features and shape the product.
+                <p>
+                    We are building the future of home fitness. Join our private beta to get early access.
                 </p>
 
                 {status === 'success' ? (
-                    <div style={{ color: '#4ade80', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                    <div className="beta-success">
                         🎉 You're on the list! Thank you.
                     </div>
                 ) : (
@@ -113,15 +110,13 @@ const LandingPage = () => {
                         </button>
                     </form>
                 )}
-                {status === 'error' && <p style={{ color: '#ff4081', marginTop: '10px' }}>Something went wrong. Please try again.</p>}
+                {status === 'error' && <p className="beta-error">Something went wrong. Please try again.</p>}
             </section>
 
             {/* Footer */}
             <footer className="footer">
                 <p>&copy; 2026 JessieMoves. AI-Powered Pilates Coach.</p>
-                <p style={{ marginTop: '10px', fontSize: '0.8rem', opacity: 0.7 }}>
-                    Version: Alpha Release | Built for Web
-                </p>
+                <p className="version">Version: Alpha Release | Built for Web & Mobile</p>
             </footer>
         </div>
     );

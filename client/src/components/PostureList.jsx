@@ -17,34 +17,18 @@ const PostureList = () => {
             });
     }, []);
 
-    if (loading) return <div style={{ color: '#aaa', fontStyle: 'italic' }}>Loading available postures...</div>;
+    if (loading) return <div className="loading-text">Loading available postures...</div>;
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+        <div className="posture-grid">
             {postures.map(posture => (
-                <div key={posture.id} style={{
-                    background: '#1a1a1a',
-                    border: '1px solid #333',
-                    borderRadius: '10px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    transition: 'transform 0.2s',
-                    cursor: 'default'
-                }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🤸‍♀️</div>
-                    <h3 style={{ margin: '0 0 10px 0', color: '#fff' }}>{posture.name}</h3>
-                    <p style={{ fontSize: '0.9rem', color: '#aaa', marginBottom: '15px' }}>{posture.description}</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
+                <div key={posture.id} className="posture-card">
+                    <div className="posture-emoji">🤸‍♀️</div>
+                    <h3 className="posture-name">{posture.name}</h3>
+                    <p className="posture-desc">{posture.description}</p>
+                    <div className="posture-tags">
                         {posture.benefits.slice(0, 2).map((benefit, idx) => (
-                            <span key={idx} style={{
-                                background: '#2d2d2d',
-                                color: '#2196f3',
-                                fontSize: '0.75rem',
-                                padding: '3px 8px',
-                                borderRadius: '10px'
-                            }}>
-                                {benefit}
-                            </span>
+                            <span key={idx} className="posture-tag">{benefit}</span>
                         ))}
                     </div>
                 </div>

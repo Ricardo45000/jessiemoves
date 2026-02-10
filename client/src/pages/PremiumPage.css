@@ -1,122 +1,193 @@
+/* ═══════════════════════════════════════════════════════════════
+   PremiumPage — Mobile-First Responsive
+   ═══════════════════════════════════════════════════════════════ */
+
 .premium-page {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background: radial-gradient(ellipse at top, #0f0c29, #1a1540, #0a0820);
     min-height: 100vh;
+    min-height: 100dvh;
     color: white;
-    padding: 40px;
-    font-family: 'Inter', sans-serif;
+    padding: var(--space-xl) var(--space-md);
     display: flex;
     flex-direction: column;
     align-items: center;
+    animation: fadeIn 0.4s ease;
 }
 
+@media (min-width: 768px) {
+    .premium-page {
+        padding: var(--space-3xl) var(--space-xl);
+    }
+}
+
+/* Hero */
 .premium-hero {
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: var(--space-xl);
+}
+
+@media (min-width: 768px) {
+    .premium-hero {
+        margin-bottom: var(--space-3xl);
+    }
 }
 
 .premium-hero h1 {
-    font-size: 3rem;
-    background: -webkit-linear-gradient(#eee, #333);
+    font-size: var(--font-2xl);
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #c084fc 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    /* Fallback */
-    color: white;
-    /* Actual color */
-    margin-bottom: 10px;
+    background-clip: text;
+    margin-bottom: var(--space-sm);
+}
+
+@media (min-width: 768px) {
+    .premium-hero h1 {
+        font-size: var(--font-4xl);
+    }
 }
 
 .premium-hero p {
-    font-size: 1.2rem;
-    color: #ccc;
+    font-size: var(--font-base);
+    color: var(--text-secondary);
 }
 
-.features-grid {
-    display: flex;
-    gap: 30px;
-    margin-bottom: 60px;
-    flex-wrap: wrap;
-    justify-content: center;
+@media (min-width: 768px) {
+    .premium-hero p {
+        font-size: var(--font-xl);
+    }
 }
 
-.feature-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    padding: 30px;
-    border-radius: 15px;
-    width: 250px;
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.feature-card .icon {
-    font-size: 3rem;
-    margin-bottom: 20px;
-}
-
-.pricing-card {
-    background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
-    padding: 50px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 2px solid #6a11cb;
-    max-width: 400px;
+/* Features Grid */
+.premium-page .features-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
     width: 100%;
+    max-width: 900px;
+}
+
+@media (min-width: 480px) {
+    .premium-page .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .premium-page .features-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+        margin-bottom: var(--space-3xl);
+    }
+}
+
+.premium-page .feature-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    width: auto;
+    text-align: center;
+    border: 1px solid var(--border-subtle);
+    transition: all var(--transition-base);
+}
+
+.premium-page .feature-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.premium-page .feature-card .icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+}
+
+.premium-page .feature-card h3 {
+    font-size: var(--font-lg);
+    margin-bottom: var(--space-sm);
+}
+
+.premium-page .feature-card p {
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+    line-height: 1.5;
+}
+
+/* Pricing Card */
+.pricing-card {
+    background: var(--gradient-card);
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), var(--shadow-glow-purple);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    width: 100%;
+    max-width: 400px;
+}
+
+@media (min-width: 768px) {
+    .pricing-card {
+        padding: var(--space-2xl);
+    }
 }
 
 .pricing-card h2 {
-    color: #fff;
-    margin-bottom: 20px;
+    color: var(--text-primary);
+    margin-bottom: var(--space-lg);
+    font-size: var(--font-2xl);
 }
 
 .price {
-    font-size: 3.5rem;
-    font-weight: bold;
-    color: #6a11cb;
-    margin-bottom: 30px;
+    font-size: var(--font-4xl);
+    font-weight: 900;
+    color: var(--accent-purple);
+    margin-bottom: var(--space-lg);
 }
 
 .price span {
-    font-size: 1rem;
-    color: #aaa;
-    font-weight: normal;
+    font-size: var(--font-base);
+    color: var(--text-muted);
+    font-weight: 400;
 }
 
 .benefits-list {
     list-style: none;
     padding: 0;
     text-align: left;
-    margin-bottom: 40px;
+    margin-bottom: var(--space-xl);
 }
 
 .benefits-list li {
-    margin-bottom: 15px;
-    font-size: 1.1rem;
+    margin-bottom: var(--space-md);
+    font-size: var(--font-base);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
 }
 
 .cta-button {
-    background: linear-gradient(90deg, #2575fc, #6a11cb);
+    background: var(--gradient-btn);
     color: white;
     border: none;
-    padding: 15px 40px;
-    border-radius: 50px;
-    font-size: 1.2rem;
-    font-weight: bold;
+    padding: 16px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-lg);
+    font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all var(--transition-base);
     width: 100%;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
 }
 
 .cta-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(37, 117, 252, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+}
+
+.cta-button:active {
+    transform: translateY(0);
 }

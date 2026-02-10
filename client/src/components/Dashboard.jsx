@@ -1,45 +1,30 @@
 import React, { useState } from 'react';
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Legend
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import PostureList from './PostureList';
 import PostureHistory from './PostureHistory';
 import FeedbackDetail from './FeedbackDetail';
 
 const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
-    // State for Feedback Detail Modal
     const [selectedSession, setSelectedSession] = useState(null);
 
-    // Safe default if history is empty
     const history = user.posture_history || [];
-
-    // Process data for charts
-    // Sort by date to ensure line chart flows correctly
     const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Format data for Recharts
     const chartData = sortedHistory.map(entry => ({
         date: new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
         score: entry.score,
         pose: entry.pose
     }));
 
-    // Calculate stats
     const totalSessions = history.length;
     const averageScore = totalSessions > 0
         ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / totalSessions)
         : 0;
 
     return (
-        <div className="dashboard-container" style={{
-            padding: '40px 20px',
-            maxWidth: '1200px',
-            margin: '0 auto',
-            color: '#fff',
-            fontFamily: "'Inter', sans-serif"
-        }}>
-            {/* Feedback Detail Modal */}
+        <div className="dashboard">
             {selectedSession && (
                 <FeedbackDetail
                     session={selectedSession}
@@ -47,144 +32,77 @@ const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
                 />
             )}
 
-            {/* Header Section */}
-            <header style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '40px',
-                borderBottom: '1px solid #333',
-                paddingBottom: '20px'
-            }}>
+            {/* Header */}
+            <header className="dash-header">
                 <div>
-                    <h1 style={{ fontSize: '2.5rem', marginBottom: '10px', background: 'linear-gradient(90deg, #ff4081, #2196f3)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    <h1 className="dash-greeting gradient-text">
                         Hello, {user.profile.first_name}
                     </h1>
-                    <p style={{ color: '#aaa', fontSize: '1.1rem' }}>
-                        Level: <span style={{ color: '#2196f3', fontWeight: 'bold' }}>{user.profile.level}</span> •
-                        Status: <span style={{ color: '#4caf50' }}>Active</span>
+                    <p className="dash-meta">
+                        Level: <span className="level">{user.profile.level}</span> •{' '}
+                        Status: <span className="status">Active</span>
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '15px' }}>
+                <div className="dash-actions">
                     {!user.is_premium && (
-                        <button
-                            onClick={() => window.location.href = '/premium'}
-                            style={{
-                                background: 'linear-gradient(90deg, #ff4081, #f50057)',
-                                border: 'none',
-                                color: 'white',
-                                padding: '8px 20px',
-                                borderRadius: '20px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                boxShadow: '0 4px 6px rgba(255, 64, 129, 0.3)',
-                                transition: 'all 0.3s'
-                            }}
-                        >
+                        <button className="btn-upgrade" onClick={() => window.location.href = '/premium'}>
                             Upgrade to Premium 💎
                         </button>
                     )}
-                    <button
-                        onClick={onLogout}
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid #666',
-                            color: '#aaa',
-                            padding: '8px 20px',
-                            borderRadius: '20px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s'
-                        }}
-                    >
-                        Logout
-                    </button>
+                    <button className="btn-logout" onClick={onLogout}>Logout</button>
                 </div>
             </header>
 
             {/* Quick Actions */}
-            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-                <div
-                    onClick={onStartLive}
-                    style={{
-                        background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-                        padding: '30px',
-                        borderRadius: '15px',
-                        cursor: 'pointer',
-                        border: '1px solid #333',
-                        textAlign: 'center',
-                        transition: 'transform 0.2s',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                    }}
-                >
-                    <span style={{ fontSize: '3rem', display: 'block', marginBottom: '15px' }}>🎥</span>
-                    <h3 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Live Session</h3>
-                    <p style={{ color: '#888', fontSize: '0.9rem' }}>Real-time posture AI analysis</p>
+            <section className="quick-actions">
+                <div className="action-card" onClick={onStartLive}>
+                    <span className="action-icon">🎥</span>
+                    <h3 className="action-title">Live Session</h3>
+                    <p className="action-desc">Real-time posture AI analysis</p>
                 </div>
 
-                <div
-                    onClick={onStartUpload}
-                    style={{
-                        background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-                        padding: '30px',
-                        borderRadius: '15px',
-                        cursor: 'pointer',
-                        border: '1px solid #333',
-                        textAlign: 'center',
-                        transition: 'transform 0.2s',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                    }}
-                >
-                    <span style={{ fontSize: '3rem', display: 'block', marginBottom: '15px' }}>📁</span>
-                    <h3 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Upload Video</h3>
-                    <p style={{ color: '#888', fontSize: '0.9rem' }}>Analyze pre-recorded content</p>
+                <div className="action-card" onClick={onStartUpload}>
+                    <span className="action-icon">📁</span>
+                    <h3 className="action-title">Upload Video</h3>
+                    <p className="action-desc">Analyze pre-recorded content</p>
                 </div>
 
-                <div style={{
-                    background: '#1a1a1a',
-                    padding: '30px',
-                    borderRadius: '15px',
-                    border: '1px solid #333',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-                        <div>
-                            <h4 style={{ fontSize: '2rem', color: '#ff4081', margin: 0 }}>{totalSessions}</h4>
-                            <p style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '5px' }}>Total Sessions</p>
-                        </div>
-                        <div>
-                            <h4 style={{ fontSize: '2rem', color: '#2196f3', margin: 0 }}>{averageScore}</h4>
-                            <p style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '5px' }}>Avg Score</p>
-                        </div>
+                <div className="stats-card">
+                    <div>
+                        <h4 className="stat-value pink">{totalSessions}</h4>
+                        <p className="stat-label">Total Sessions</p>
+                    </div>
+                    <div>
+                        <h4 className="stat-value blue">{averageScore}</h4>
+                        <p className="stat-label">Avg Score</p>
                     </div>
                 </div>
             </section>
 
             {/* Available Postures */}
-            <section style={{ marginBottom: '40px' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', borderLeft: '4px solid #4caf50', paddingLeft: '15px' }}>Available Pilates Exercises</h2>
+            <section className="dash-section">
+                <h2 className="section-header green">Available Pilates Exercises</h2>
                 <PostureList />
             </section>
 
             {/* Progress Chart */}
-            <section style={{ marginBottom: '40px' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', borderLeft: '4px solid #ff4081', paddingLeft: '15px' }}>Progress Over Time</h2>
-                <div style={{ height: '300px', background: '#1a1a1a', padding: '20px', borderRadius: '15px', border: '1px solid #333' }}>
+            <section className="dash-section">
+                <h2 className="section-header pink">Progress Over Time</h2>
+                <div className="chart-container">
                     {chartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                <XAxis dataKey="date" stroke="#666" />
-                                <YAxis stroke="#666" domain={[0, 100]} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+                                <XAxis dataKey="date" stroke="#555" tick={{ fontSize: 12 }} />
+                                <YAxis stroke="#555" domain={[0, 100]} tick={{ fontSize: 12 }} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#2d2d2d', border: 'none', borderRadius: '8px' }}
+                                    contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #333', borderRadius: '8px' }}
                                     itemStyle={{ color: '#fff' }}
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="score"
-                                    stroke="#ff4081"
+                                    stroke="#ec4899"
                                     strokeWidth={3}
                                     dot={{ r: 4, strokeWidth: 2 }}
                                     activeDot={{ r: 8 }}
@@ -192,16 +110,16 @@ const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
                             </LineChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+                        <div className="chart-empty">
                             No data yet. Complete your first session!
                         </div>
                     )}
                 </div>
             </section>
 
-            {/* Recent Activity / History */}
-            <section>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', borderLeft: '4px solid #2196f3', paddingLeft: '15px' }}>Your Journey</h2>
+            {/* Recent Activity */}
+            <section className="dash-section">
+                <h2 className="section-header blue">Your Journey</h2>
                 <PostureHistory
                     history={history}
                     onViewDetail={setSelectedSession}

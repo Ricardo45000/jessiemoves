@@ -14,10 +14,9 @@ import Dashboard from './components/Dashboard';
 // Main Application Component (Protected)
 const MainApp = ({ initialMode = 'home' }) => {
   const { user, logout } = useContext(AuthContext);
-  const [appMode, setAppMode] = useState(initialMode); // home, live, upload, analysis
+  const [appMode, setAppMode] = useState(initialMode);
   const [selectedMedia, setSelectedMedia] = useState(null);
 
-  // Handle internal modes (Dashboard vs Tools)
   const handleFileSelect = (media) => {
     setSelectedMedia(media);
     setAppMode('analysis');
@@ -27,23 +26,17 @@ const MainApp = ({ initialMode = 'home' }) => {
     case 'live':
       return (
         <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setAppMode('home')}
-            style={{ position: 'absolute', top: 20, left: 20, zIndex: 100, padding: '10px 15px', background: '#555', color: 'white', border: 'none', cursor: 'pointer' }}
-          >
-            Back
+          <button className="back-btn" onClick={() => setAppMode('home')}>
+            ← Back
           </button>
           <PoseDetector />
         </div>
       );
     case 'upload':
       return (
-        <div className="upload-screen">
-          <button
-            onClick={() => setAppMode('home')}
-            style={{ position: 'absolute', top: 20, left: 20, zIndex: 100, padding: '10px 15px', background: '#555', color: 'white', border: 'none', cursor: 'pointer' }}
-          >
-            Back
+        <div style={{ position: 'relative' }}>
+          <button className="back-btn" onClick={() => setAppMode('home')}>
+            ← Back
           </button>
           <FileUpload onFileSelect={handleFileSelect} />
         </div>
@@ -73,7 +66,7 @@ const MainApp = ({ initialMode = 'home' }) => {
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  if (loading) return <div className="loading-container">Loading...</div>;
 
   if (!user) {
     return <Navigate to="/login" replace />;
