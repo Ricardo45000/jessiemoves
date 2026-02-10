@@ -147,6 +147,7 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
         };
 
         videoElement.addEventListener('seeked', onSeeked);
+        videoElement.addEventListener('ended', onSeeked); // [FIX] Handle video end case
 
         // Start
         currentTime = 0;
