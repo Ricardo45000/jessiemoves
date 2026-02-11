@@ -93,7 +93,12 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
 
         const capturedFrames = [];
 
+        const MIN_FRAME_TIME = 3000; // 3s Timeout per frame
+        let frameTimeout = null;
+
         poseDetector.onResults((results) => {
+            if (frameTimeout) clearTimeout(frameTimeout);
+
             if (!results.poseLandmarks) {
                 capturedFrames.push({ time: videoElement.currentTime, pose: 'Unknown', confidence: 0, image: null });
                 nextFrame();
@@ -122,7 +127,7 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
                 pose: poseName,
                 confidence,
                 image: keyframeImage,
-                landmarks: results.poseLandmarks // [NEW] Store landmarks for post-analysis
+                landmarks: results.poseLandmarks
             });
 
             nextFrame();
@@ -136,10 +141,16 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
             }
 
             currentTime += SAMPLE_RATE;
-            onProgress(Math.min(Math.round((currentTime / duration) * 100), 100)); // Update progress
+            onProgress(Math.min(Math.round((currentTime / duration) * 100), 100));
+
+            // Set Timeout for this frame (Security Valve)
+            frameTimeout = setTimeout(() => {
+                console.warn(`Analysis timed out for frame at ${currentTime}s. Skipping.`);
+                capturedFrames.push({ time: currentTime, pose: 'Skipped', confidence: 0, image: null });
+                nextFrame();
+            }, MIN_FRAME_TIME);
 
             videoElement.currentTime = currentTime;
-            // The 'seeked' event logic needs to happen here to trigger the send
         };
 
         const onSeeked = async () => {
