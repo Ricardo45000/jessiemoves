@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const generateSessionReport = (sessionSummary, sequenceData) => {
     const doc = new jsPDF();
@@ -167,7 +167,7 @@ export const generateSessionReport = (sessionSummary, sequenceData) => {
         item.feedback ? item.feedback.join('\n') : '-'
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: yPos,
         head: [['Exercise', 'Duration', 'Level', 'Score', 'Feedback']],
         body: tableData,
