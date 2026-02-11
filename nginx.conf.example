@@ -6,6 +6,9 @@ server {
         root /var/www/jessiemoves/client/dist;
         index index.html index.htm;
         try_files $uri $uri/ /index.html;
+        
+        # Add CSP Header to allow MediaPipe/PDF generation
+        add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; object-src 'none';" always;
     }
 
     location /api {

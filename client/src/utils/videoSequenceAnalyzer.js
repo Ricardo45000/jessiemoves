@@ -548,3 +548,9 @@ function generateSessionSummary(sequenceData) {
 
 // Helper to calculate variance
 
+// Helper to format time (MM:SS)
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
