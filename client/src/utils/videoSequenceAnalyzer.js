@@ -1,4 +1,6 @@
 import { classifyPose } from './poseClassifier';
+import { evaluatePose } from './poseEvaluator';
+import { getSessionRecommendation } from './recommendationEngine';
 
 /**
  * Analyzes a video file to extract a sequence of Pilates poses.
@@ -155,17 +157,22 @@ export async function analyzeVideoSequence(videoElement, poseDetector, onProgres
 
         const finishAnalysis = () => {
             videoElement.removeEventListener('seeked', onSeeked);
-            // Restore? We can't easily. The caller should re-bind their live listener.
+            videoElement.removeEventListener('ended', onSeeked);
 
-            // --- POST PROCESSING ---
-            const sequence = cleanSequence(capturedFrames);
-            const sessionSummary = generateSessionSummary(sequence); // [NEW] Generate Global Summary
+            try {
+                // --- POST PROCESSING ---
+                const sequence = cleanSequence(capturedFrames);
+                const sessionSummary = generateSessionSummary(sequence);
 
-            resolve({
-                video_name: null,
-                posture_sequence: sequence,
-                session_summary: sessionSummary // [NEW] Return summary
-            });
+                resolve({
+                    video_name: null,
+                    posture_sequence: sequence,
+                    session_summary: sessionSummary
+                });
+            } catch (error) {
+                console.error("Error in finishAnalysis:", error);
+                reject(error);
+            }
         };
     });
 }
@@ -248,7 +255,8 @@ function cleanSequence(rawFrames) {
  * Analyzes quality of a pose segment by aggregating multi-frame data.
  */
 // [NEW] Comparison helper
-import { evaluatePose } from './poseEvaluator';
+// [NEW] Comparison helper
+// import { evaluatePose } from './poseEvaluator' (Moved to top)
 
 function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
     // A. Filter Frames: Remove transitions (first/last 10-15% of duration)
@@ -277,7 +285,6 @@ function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
     if (evaluations.length === 0) return { score: {}, feedback: [], level: 'Unknown' };
 
     // C. Aggregate Scores (Mean per indicator)
-    // evaluations[i].indicators = { Alignment: 80, Stability: 90, ... }
     const scoreSums = {};
     const scoreCounts = {};
     const allFeedback = [];
@@ -296,14 +303,10 @@ function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
         finalScores[key] = Math.round(scoreSums[key] / scoreCounts[key]);
     });
 
-    // D. Aggregate Feedback (Deduplicate & limit)
-    // Simple dedupe
+    // D. Aggregate Feedback
     const uniqueFeedback = [...new Set(allFeedback)];
-    // Limit to top 3? Or return all? 
-    // The prompt asks for "Feedback textuel agrégé".
 
     // E. Determine Level based on Global Score
-    // Calculate global mean
     const scoreValues = Object.values(finalScores);
     const globalMean = scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length;
 
@@ -311,30 +314,62 @@ function analyzeSegmentQuality(frames, poseName, startTime, endTime) {
     if (globalMean > 85) level = 'Advanced';
     else if (globalMean > 70) level = 'Intermediate';
 
-    // F. Dynamic Metrics (Stability, Endurance)
-    // 1. Stability: Variance of Hips Y-coord (Vertical stability)
-    // We expect hips to be relatively stable in most Pilates holds
-    const hipYValues = analysisFrames.map(f => (f.landmarks[23].y + f.landmarks[24].y) / 2);
-    const stabilityVariance = calculateVariance(hipYValues);
-    const stabilityScore = Math.max(0, 100 - (stabilityVariance * 10000)); // Scale roughly
+    // F. Dynamic Metrics (Pilates)
 
-    // 2. Endurance: Trend of Confidence or Hips?
-    // Let's use slight drop in Hips Y (sagging) or just score consistency
-    // Simple approach: First 30% vs Last 30% of frames. 
-    // If variance increases at end, endurance is low.
-    const split = Math.floor(analysisFrames.length / 3);
-    const startVar = calculateVariance(hipYValues.slice(0, split));
-    const endVar = calculateVariance(hipYValues.slice(-split));
-    const enduranceScore = startVar < endVar ? Math.max(0, 100 - ((endVar - startVar) * 5000)) : 100;
+    // 1. Stability (Balance): Variance of the "Powerhouse Box" (Shoulders + Hips) Center
+    // We calculate the Center of Gravity (approx) for the box and measure its deviation.
+    const boxCenters = analysisFrames.map(f => {
+        const ls = f.landmarks[11]; // Left Shoulder
+        const rs = f.landmarks[12]; // Right Shoulder
+        const lh = f.landmarks[23]; // Left Hip
+        const rh = f.landmarks[24]; // Right Hip
+        return {
+            x: (ls.x + rs.x + lh.x + rh.x) / 4,
+            y: (ls.y + rs.y + lh.y + rh.y) / 4
+        };
+    });
+    // Variance of X and Y combined
+    const stabilityVarX = calculateVariance(boxCenters.map(p => p.x));
+    const stabilityVarY = calculateVariance(boxCenters.map(p => p.y));
+    // Lower variance is better. Scale: 0.0001 var is excellent, 0.01 is poor.
+    // Logarithmic scale might be better, but linear for now:
+    const stabilityScore = Math.max(0, 100 - ((stabilityVarX + stabilityVarY) * 20000));
+
+    // 2. Endurance: Compare Global Score of First 30% vs Last 30%
+    const splitIdx = Math.floor(evaluations.length * 0.3);
+    let enduranceScore = 100;
+
+    if (splitIdx > 0) {
+        const startEval = evaluations.slice(0, splitIdx);
+        const endEval = evaluations.slice(-splitIdx);
+
+        const getAvgScore = (evals) => {
+            if (!evals.length) return 0;
+            return evals.reduce((sum, e) => sum + e.globalScore, 0) / evals.length;
+        };
+
+        const startScore = getAvgScore(startEval);
+        const endScore = getAvgScore(endEval);
+
+        // If score drops, endurance is penalized. If it maintains or improves, 100.
+        // Penalty factor: 2x the drop
+        const drop = startScore - endScore;
+        enduranceScore = drop > 0 ? Math.max(0, 100 - (drop * 2)) : 100;
+    }
+
+    // 3. Fluidity (Control): Smoothness of movement (Micro-jitters)
+    // We measure the average "Jerk" (change in velocity) of the Hips
+    const fluidityScore = calculateFluidity(analysisFrames);
 
     return {
         score: finalScores,
-        feedback: uniqueFeedback.slice(0, 4), // Limit to 4 items
+        feedback: uniqueFeedback.slice(0, 4),
         level: level,
         global_score: Math.round(globalMean),
         dynamic_metrics: {
             stability: Math.round(stabilityScore),
-            endurance: Math.round(enduranceScore)
+            endurance: Math.round(enduranceScore),
+            fluidity: Math.round(fluidityScore) // [NEW]
         }
     };
 }
@@ -345,10 +380,47 @@ function calculateVariance(values) {
     return values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
 }
 
+function calculateFluidity(frames) {
+    if (frames.length < 3) return 100;
+    let totalJerk = 0;
+    // Analyze Hips Center
+    const points = frames
+        .filter(f => f.landmarks && f.landmarks[23] && f.landmarks[24])
+        .map(f => ({
+            x: (f.landmarks[23].x + f.landmarks[24].x) / 2,
+            y: (f.landmarks[23].y + f.landmarks[24].y) / 2,
+            t: f.time
+        }));
+
+    for (let i = 2; i < points.length; i++) {
+        const p1 = points[i - 2];
+        const p2 = points[i - 1];
+        const p3 = points[i];
+
+        // Velocity (simplified, assuming const frame rate roughly)
+        const v1x = p2.x - p1.x, v1y = p2.y - p1.y;
+        const v2x = p3.x - p2.x, v2y = p3.y - p2.y;
+
+        // Acceleration/Jerk (Change in velocity)
+        const ax = v2x - v1x;
+        const ay = v2y - v1y;
+
+        const jerk = Math.sqrt(ax * ax + ay * ay);
+        totalJerk += jerk;
+    }
+
+    const avgJerk = totalJerk / (frames.length - 2);
+    // Scale: Low jerk is good. 0.001 is stable, 0.01 is shaky.
+    return Math.max(0, 100 - (avgJerk * 5000));
+}
+
 /**
  * Generates a global session summary from the sequence data.
  */
-import { getSessionRecommendation } from './recommendationEngine';
+/**
+ * Generates a global session summary from the sequence data.
+ */
+// import { getSessionRecommendation } from './recommendationEngine' (Moved to top)
 
 function generateSessionSummary(sequenceData) {
     if (!sequenceData || sequenceData.length === 0) return null;
@@ -358,12 +430,19 @@ function generateSessionSummary(sequenceData) {
     const globalCounts = {};
     const poseScores = []; // { name, score, id }
 
+    // Group scores by pose for Consistency Check
+    const poseConsistencyMap = {}; // { 'Roll-Up': [80, 85, 82], ... }
+
     sequenceData.forEach(item => {
         if (!item.score) return;
 
         // Track per-pose score for ranking
         const itemMean = Object.values(item.score).reduce((a, b) => a + b, 0) / Object.values(item.score).length || 0;
         poseScores.push({ name: item.pose, score: itemMean });
+
+        // Consistency Data
+        if (!poseConsistencyMap[item.pose]) poseConsistencyMap[item.pose] = [];
+        poseConsistencyMap[item.pose].push(itemMean);
 
         // Accumulate global
         Object.entries(item.score).forEach(([key, val]) => {
@@ -406,24 +485,40 @@ function generateSessionSummary(sequenceData) {
     const recommendation = getSessionRecommendation(weakestIndicator);
 
     // 7. Calculate Advanced Session Metrics
-    // Consistency: Std Dev of scores across session
-    const allScores = poseScores.map(p => p.score);
-    const consistency = allScores.length > 1 ? Math.max(0, 100 - (Math.sqrt(calculateVariance(allScores)) * 2)) : 100;
 
-    // Avg Stability/Endurance from segments
-    let totalStab = 0, totalEndur = 0, countDyn = 0;
+    // A. Consistency: Average 100 - (StdDev of repeats * 2)
+    let totalConsistency = 0;
+    let consistencyCount = 0;
+
+    Object.values(poseConsistencyMap).forEach(scores => {
+        if (scores.length > 1) { // Only calculate if repeated
+            const variance = calculateVariance(scores);
+            const stdDev = Math.sqrt(variance);
+            const score = Math.max(0, 100 - (stdDev * 5)); // 5 point penalty per unit of deviation
+            totalConsistency += score;
+            consistencyCount++;
+        }
+    });
+    // If no repeats, default to high consistency (benefit of doubt) or just global variance?
+    // Let's use 100 if no repeats, or fallback to global deviation if needed.
+    const consistency = consistencyCount > 0 ? Math.round(totalConsistency / consistencyCount) : 100;
+
+    // B. Avg Stability/Endurance/Fluidity from segments
+    let totalStab = 0, totalEndur = 0, totalFluid = 0, countDyn = 0;
     sequenceData.forEach(item => {
         if (item.dynamic_metrics) {
             totalStab += item.dynamic_metrics.stability;
             totalEndur += item.dynamic_metrics.endurance;
+            totalFluid += item.dynamic_metrics.fluidity || 0;
             countDyn++;
         }
     });
 
     const advancedMetrics = {
-        consistency: Math.round(consistency),
+        consistency: consistency,
         stability: countDyn ? Math.round(totalStab / countDyn) : 0,
-        endurance: countDyn ? Math.round(totalEndur / countDyn) : 0
+        endurance: countDyn ? Math.round(totalEndur / countDyn) : 0,
+        fluidity: countDyn ? Math.round(totalFluid / countDyn) : 0
     };
 
     return {
@@ -435,7 +530,7 @@ function generateSessionSummary(sequenceData) {
         recommendation,
         totalPoses: sequenceData.length,
         globalScore: Math.round(globalMean),
-        advancedMetrics // [NEW]
+        advancedMetrics // [NEW] Stats for dashboard/PDF
     };
 }
 

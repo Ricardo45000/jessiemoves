@@ -98,6 +98,60 @@ export const generateSessionReport = (sessionSummary, sequenceData) => {
         yPos += 45;
     }
 
+    // --- ADVANCED METRICS (Dynamic) ---
+    if (sessionSummary.advancedMetrics) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Advanced Session Metrics", 20, yPos);
+        yPos += 15;
+
+        // Metrics Configuration
+        const metrics = [
+            { label: 'Stability', score: sessionSummary.advancedMetrics.stability || 0, color: [33, 150, 243] }, // Blue
+            { label: 'Endurance', score: sessionSummary.advancedMetrics.endurance || 0, color: [76, 175, 80] }, // Green
+            { label: 'Fluidity', score: sessionSummary.advancedMetrics.fluidity || 0, color: [156, 39, 176] }, // Purple
+            { label: 'Consistency', score: sessionSummary.advancedMetrics.consistency || 0, color: [255, 152, 0] } // Orange
+        ];
+
+        // Layout
+        const margin = 30;
+        const availableWidth = pageWidth - (margin * 2);
+        const gap = availableWidth / 3; // space between 4 items
+
+        metrics.forEach((m, i) => {
+            const x = margin + (i * gap);
+
+            // Draw Circle Background (Ring)
+            doc.setDrawColor(230, 230, 230);
+            doc.setLineWidth(1.5);
+            doc.circle(x, yPos + 5, 14, 'S');
+
+            // Draw Score Ring (Simulated Progress - Full circle for now as visual placeholder)
+            // Ideally use arc() but jsPDF basic implementation is tricky. 
+            // We'll just color the ring if score > 50
+            if (m.score > 0) {
+                doc.setDrawColor(...m.color);
+                doc.setLineWidth(2);
+                doc.circle(x, yPos + 5, 14, 'S');
+            }
+
+            // Score Number
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(...m.color);
+            doc.text(`${m.score}`, x, yPos + 9, { align: 'center' });
+
+            // Label
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.setTextColor(80, 80, 80);
+            doc.text(m.label, x, yPos + 28, { align: 'center' });
+        });
+
+        yPos += 45;
+    }
+
     // --- DETAILED TIMELINE TABLE ---
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
