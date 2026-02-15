@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -30,6 +31,13 @@ const LandingPage = () => {
 
     return (
         <div className="landing-container">
+            <Navbar theme="dark" alwaysTransparent={true} />
+
+            {/* Hero Section */
+            /* Added padding-top to account for fixed navbar in CSS if needed, 
+               but transparent nav usually overlays content. 
+               The hero-section in CSS has padding: var(--space-3xl) which is usually sufficient. 
+             */}
             {/* Hero Section */}
             <header className="hero-section">
                 <h1 className="hero-title">
@@ -41,7 +49,7 @@ const LandingPage = () => {
                     Practice effectively, safely, and measure your progress—right from your browser.
                 </p>
                 <div className="cta-group">
-                    <button onClick={() => navigate('/register')} className="btn-primary">
+                    <button onClick={() => navigate('/ai/register')} className="btn-primary">
                         Try It Now (Free)
                     </button>
                     <a href="#beta" className="btn-secondary">

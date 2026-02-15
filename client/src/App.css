@@ -189,6 +189,7 @@
   border: 1px solid var(--border-subtle);
   display: flex;
   justify-content: space-around;
+  align-items: center;
   text-align: center;
 }
 

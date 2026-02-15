@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import Navbar from '../components/Navbar';
 
 const LoginPage = ({ onSwitchToRegister }) => {
     const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ const LoginPage = ({ onSwitchToRegister }) => {
 
     return (
         <div className="auth-page">
+            <Navbar theme="dark" alwaysTransparent={true} />
             <div className="auth-container">
                 <h2>Welcome Back</h2>
                 {error && <div className="auth-error">{error}</div>}

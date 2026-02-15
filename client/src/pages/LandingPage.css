@@ -32,8 +32,11 @@
 }
 
 .hero-title {
+  font-family: 'Canela', 'Playfair Display', serif;
+  /* Updated per request */
   font-size: var(--font-3xl);
-  font-weight: 900;
+  font-weight: 400;
+  /* Regular weight for Canela usually looks better */
   margin-bottom: var(--space-lg);
   background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #c084fc 100%);
   -webkit-background-clip: text;
@@ -159,10 +162,12 @@
 }
 
 .section-title {
+  font-family: 'Canela', 'Playfair Display', serif;
+  /* Updated per request */
   text-align: center;
   font-size: var(--font-2xl);
   margin-bottom: var(--space-xl);
-  font-weight: 800;
+  font-weight: 400;
 }
 
 @media (min-width: 768px) {
@@ -216,9 +221,12 @@
 }
 
 .feature-card h3 {
+  font-family: 'Canela', 'Playfair Display', serif;
+  /* Updated per request */
   font-size: var(--font-lg);
   margin-bottom: var(--space-sm);
   color: var(--text-primary);
+  font-weight: 400;
 }
 
 .feature-card p {
@@ -241,8 +249,11 @@
 }
 
 .roadmap-section h2 {
+  font-family: 'Canela', 'Playfair Display', serif;
+  /* Updated per request */
   font-size: var(--font-2xl);
   margin-bottom: var(--space-md);
+  font-weight: 400;
 }
 
 @media (min-width: 768px) {

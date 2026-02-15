@@ -79,12 +79,6 @@ const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
                 </div>
             </section>
 
-            {/* Available Postures */}
-            <section className="dash-section">
-                <h2 className="section-header green">Available Pilates Exercises</h2>
-                <PostureList />
-            </section>
-
             {/* Progress Chart */}
             <section className="dash-section">
                 <h2 className="section-header pink">Progress Over Time</h2>
@@ -124,6 +118,12 @@ const Dashboard = ({ user, onLogout, onStartLive, onStartUpload }) => {
                     history={history}
                     onViewDetail={setSelectedSession}
                 />
+            </section>
+
+            {/* Available Postures */}
+            <section className="dash-section">
+                <h2 className="section-header green">Available Pilates Exercises</h2>
+                <PostureList />
             </section>
         </div>
     );

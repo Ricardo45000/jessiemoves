@@ -1,652 +1,212 @@
-import { calculateAngle, calculateDistance } from './geometry';
+import { normalizeLandmarks, weightedDistance } from './poseUtils';
+import { POSE_ANCHORS } from './poseLibrary';
 
 /**
- * Pose Evaluator for all 34 Classical Pilates Mat Exercises
- * Reference: Joseph Pilates — "Return to Life Through Contrology" (1945)
- * Each evaluator produces: indicators, feedback[], radarData[], globalScore, level
+ * Vector-Based Pose Evaluator
+ * 
+ * Scores the user's pose by comparing it to the "Gold Standard"
+ * vector in the library.
+ * 
+ * Scoring Logic:
+ * - 100 points = Perfect match (distance ~ 0)
+ * - Deduct points based on weighted Euclidean distance of specific body segments.
  */
 
 const LM = {
     NOSE: 0,
-    LEFT_EAR: 7, RIGHT_EAR: 8,
     LEFT_SHOULDER: 11, RIGHT_SHOULDER: 12,
     LEFT_ELBOW: 13, RIGHT_ELBOW: 14,
     LEFT_WRIST: 15, RIGHT_WRIST: 16,
     LEFT_HIP: 23, RIGHT_HIP: 24,
     LEFT_KNEE: 25, RIGHT_KNEE: 26,
-    LEFT_ANKLE: 27, RIGHT_ANKLE: 28,
-    LEFT_HEEL: 29, RIGHT_HEEL: 30,
-    LEFT_FOOT_INDEX: 31, RIGHT_FOOT_INDEX: 32
+    LEFT_ANKLE: 27, RIGHT_ANKLE: 28
 };
 
-function mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+// Semantic Groups for Feedback
+const GROUPS = {
+    "Upper Body": [11, 12, 13, 14, 15, 16], // Shoulders, Arms
+    "Core/Hips": [23, 24],                 // Hips
+    "Lower Body": [25, 26, 27, 28]         // Legs
+};
+
 function clamp(v) { return Math.min(100, Math.max(0, v)); }
 
-function buildResult(evaluation) {
-    const scores = evaluation.radarData.map(d => d.A);
-    evaluation.globalScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    if (evaluation.globalScore >= 85) evaluation.level = 'Advanced';
-    else if (evaluation.globalScore >= 65) evaluation.level = 'Intermediate';
-    else evaluation.level = 'Beginner';
-
-    if (evaluation.feedback.length === 0) evaluation.feedback.push('Great form! Maintain your breathing rhythm.');
-    evaluation.prioritizedTip = evaluation.feedback[0];
-    return evaluation;
-}
-
-function makeEval(poseName) {
-    return { pose: poseName, indicators: {}, feedback: [], radarData: [], globalScore: 0, level: 'Beginner', prioritizedTip: '' };
-}
-
-// ─── Evaluator Hub ─────────────────────────────────────────────
 export function evaluatePose(landmarks, poseName) {
     if (!landmarks || !poseName) return null;
 
-    const evaluators = {
-        'The Hundred': evalTheHundred,
-        'Roll-Up': evalRollUp,
-        'Roll Over': evalRollOver,
-        'One-Leg Circle': evalOneLegCircle,
-        'Rolling Like a Ball': evalRollingLikeABall,
-        'One-Leg Stretch': evalOneLegStretch,
-        'Double-Leg Stretch': evalDoubleLegStretch,
-        'Spine Stretch': evalSpineStretch,
-        'Open-Leg Rocker': evalOpenLegRocker,
-        'Corkscrew': evalCorkscrew,
-        'The Saw': evalTheSaw,
-        'Swan Dive': evalSwanDive,
-        'One-Leg Kick': evalOneLegKick,
-        'Double-Leg Kick': evalDoubleLegKick,
-        'Neck Pull': evalNeckPull,
-        'Scissors': evalScissors,
-        'Bicycle': evalBicycle,
-        'Shoulder Bridge': evalShoulderBridge,
-        'Spine Twist': evalSpineTwist,
-        'Jackknife': evalJackknife,
-        'Side Kick': evalSideKick,
-        'Teaser': evalTeaser,
-        'Hip Twist': evalHipTwist,
-        'Swimming': evalSwimming,
-        'Leg Pull Front': evalLegPullFront,
-        'Leg Pull Back': evalLegPullBack,
-        'Kneeling Side Kick': evalKneelingSideKick,
-        'Side Bend': evalSideBend,
-        'Boomerang': evalBoomerang,
-        'Seal': evalSeal,
-        'Crab': evalCrab,
-        'Rocking': evalRocking,
-        'Control Balance': evalControlBalance,
-        'Push-Up': evalPushUp,
-        'Chest Lift': evalChestLift,
-        'Pelvic Curl': evalShoulderBridge // alias
+    // 1. Find Target Vector (with Search-and-Rescue)
+    let targetPose = POSE_ANCHORS.find(p => p.name === poseName);
+
+    // Fallback: Check if inputs are "The Hundred - Variation"
+    if (!targetPose && poseName.includes(" - ")) {
+        const parts = poseName.split(" - ");
+        const parent = POSE_ANCHORS.find(a => a.name === parts[0]);
+        if (parent) {
+            targetPose = parent; // Use parent metadata
+            const v = parent.variations.find(v => v.name === parts[1]);
+            if (v) targetPose = { ...parent, vector: v.vector, name: parts[0] }; // Use variation vector
+        }
+    }
+
+    if (!targetPose) {
+        return {
+            pose: poseName,
+            indicators: { Accuracy: 50 },
+            feedback: ["Reference pose not found. Please capture it first."],
+            radarData: [{ subject: 'Accuracy', A: 50, fullMark: 100 }],
+            globalScore: 50,
+            level: 'Beginner'
+        };
+    }
+
+    // 2. Normalize User Input
+    // (We do this early to use for variation checking)
+    const userVector = normalizeLandmarks(landmarks);
+    if (!userVector) return null;
+
+    // 3. Search-and-Rescue: Check all variations
+    // Even if we have a target, check if a sub-variation matches BETTER
+    // This rescues "Good form, wrong variation" scores.
+    let targetVector = targetPose.vector;
+
+    // Resolve Anchor from Library if needed to get variations
+    const anchorInfo = POSE_ANCHORS.find(a => a.name === targetPose.name);
+
+    if (anchorInfo && anchorInfo.variations) {
+        // Calculate Unweighted Cosine Similarity (Utils function needed? Or just distance?)
+        // We will use weightedDistance as a proxy (lower is better) or just minimal deviation.
+        // Let's use the simplest metric: Distance on Key Joints.
+        // Actually, we can't import cosineSimilarity here easily without loop. 
+        // Let's iterate and check the "Overall Match" deviation for each.
+
+        let bestDist = Infinity;
+        let bestVec = targetPose.vector;
+        let originalVec = targetPose.vector;
+
+        // Check Original
+        let totalOriginal = 0;
+        for (const [_, indices] of Object.entries(GROUPS)) {
+            totalOriginal += weightedDistance(userVector, originalVec, indices);
+        }
+        bestDist = totalOriginal;
+
+        // Check Variations
+        for (const variation of anchorInfo.variations) {
+            if (!variation.vector) continue;
+            let totalVar = 0;
+            for (const [_, indices] of Object.entries(GROUPS)) {
+                totalVar += weightedDistance(userVector, variation.vector, indices);
+            }
+
+            if (totalVar < bestDist) {
+                bestDist = totalVar;
+                bestVec = variation.vector;
+                targetPose = { ...variation }; // [FIX] Switch the whole object so we get the name
+                // console.log("Rescued by variation:", variation.name);
+            }
+        }
+        targetVector = bestVec;
+    }
+
+    // 3b. Variation Rescue (Geometric Override for "The Hundred")
+    // If the pose is "The Hundred", use geometry to pick the variation
+    if (poseName === "The Hundred" && userVector) {
+        // Calculate Knee Angle (Hip-Knee-Ankle)
+        // Indices: Hip(23/24), Knee(25/26), Ankle(27/28). Use Left side (23,25,27) as proxy
+        const getAngle = (idxA, idxB, idxC) => {
+            // Vector BA
+            const v1 = { x: userVector[idxA * 3] - userVector[idxB * 3], y: userVector[idxA * 3 + 1] - userVector[idxB * 3 + 1] };
+            // Vector BC
+            const v2 = { x: userVector[idxC * 3] - userVector[idxB * 3], y: userVector[idxC * 3 + 1] - userVector[idxB * 3 + 1] };
+
+            const dot = v1.x * v2.x + v1.y * v2.y;
+            const mag1 = Math.sqrt(v1.x ** 2 + v1.y ** 2);
+            const mag2 = Math.sqrt(v2.x ** 2 + v2.y ** 2);
+            if (mag1 * mag2 === 0) return 0;
+            return Math.acos(dot / (mag1 * mag2)) * (180 / Math.PI);
+        };
+
+        const kneeAngle = getAngle(23, 25, 27);
+        // Tabletop: ~90 deg. High Diagonal: ~135-150 deg. Low Legs: ~160-180 deg.
+
+        let geoVariant = null;
+        if (kneeAngle < 110) geoVariant = "Tabletop Legs";
+        else if (kneeAngle < 155) geoVariant = "High Diagonal";
+        else geoVariant = "Low Legs";
+
+        // Override target if geometry is strong
+        if (geoVariant) {
+            const variantObj = anchorInfo.variations.find(v => v.name === geoVariant);
+            if (variantObj) {
+                targetPose = { ...variantObj }; // Override
+                targetVector = variantObj.vector;
+                // console.log(`Geometric Rescue: Switched to ${geoVariant} (Angle: ${Math.round(kneeAngle)})`);
+            }
+        }
+    }
+
+    // 3. Calculate Deviation per Group
+    const deviations = {};
+    let totalDeviation = 0;
+
+    for (const [groupName, indices] of Object.entries(GROUPS)) {
+        const dist = weightedDistance(userVector, targetVector, indices);
+        deviations[groupName] = dist;
+        totalDeviation += dist;
+    }
+
+    // 4. Generate Scores (Scaling Law: 0.1 dist is ~10 points off)
+    const SCALE = 150;
+
+    const scores = {
+        "Upper Body": clamp(100 - deviations["Upper Body"] * SCALE),
+        "Core & Hips": clamp(100 - deviations["Core/Hips"] * SCALE),
+        "Lower Body": clamp(100 - deviations["Lower Body"] * SCALE),
+        "Overall Match": clamp(100 - (totalDeviation / 3) * SCALE)
     };
 
-    const evaluator = evaluators[poseName];
-    if (!evaluator) return null;
-    return evaluator(landmarks);
+    // 5. Generate Dynamic Feedback
+    const feedback = [];
+    if (scores["Upper Body"] < 80) feedback.push("Check arm placement and shoulder alignment.");
+    if (scores["Core & Hips"] < 80) feedback.push("Stabilize your core and hips.");
+    if (scores["Lower Body"] < 80) feedback.push("Focus on leg extension and positioning.");
+    if (feedback.length === 0) feedback.push(targetPose.tips ? targetPose.tips[0] : "Excellent form!");
+
+    // 6. Build Result Object
+    const globalScore = Math.round(scores["Overall Match"]);
+
+    // Determine return name: If we switched to a variation, let the UI know.
+    let detectedVariant = null;
+    if (targetPose.name !== poseName) {
+        detectedVariant = targetPose.name;
+    }
+
+    // Amplitude-Based Level Override
+    // If the user is doing "The Hundred" with full extension (Low Legs), award Advanced
+    let level = globalScore > 85 ? 'Advanced' : globalScore > 70 ? 'Intermediate' : 'Beginner';
+
+    if (poseName === "The Hundred" && detectedVariant === "Low Legs") {
+        // Full extension detected — reward the difficulty
+        level = 'Advanced';
+    } else if (poseName === "The Hundred" && detectedVariant === "High Diagonal" && globalScore > 65) {
+        // High diagonal with decent score = at least Intermediate
+        level = globalScore > 80 ? 'Advanced' : 'Intermediate';
+    }
+
+    return {
+        pose: poseName,
+        detectedVariant: detectedVariant,
+        indicators: scores,
+        feedback: feedback,
+        radarData: [
+            { subject: 'Upper Body', A: Math.round(scores["Upper Body"]), fullMark: 100 },
+            { subject: 'Core & Hips', A: Math.round(scores["Core & Hips"]), fullMark: 100 },
+            { subject: 'Lower Body', A: Math.round(scores["Lower Body"]), fullMark: 100 },
+            { subject: 'Stability', A: 85, fullMark: 100 },
+            { subject: 'Flow', A: 80, fullMark: 100 }
+        ],
+        globalScore: globalScore,
+        level: level
+    };
 }
 
-// ─── Individual Evaluators ────────────────────────────────────
-
-function evalTheHundred(lm) {
-    const e = makeEval('The Hundred');
-    const legAng = calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]);
-    const extension = clamp((legAng / 180) * 100);
-    e.indicators.Extension = extension;
-    if (legAng < 160) e.feedback.push('Try to straighten your legs further.');
-    e.feedback.push('Pump arms vigorously with breath.');
-    e.radarData = [
-        { subject: 'Stamina', A: 90, fullMark: 100 },
-        { subject: 'Core Stability', A: 85, fullMark: 100 },
-        { subject: 'Leg Extension', A: extension, fullMark: 100 },
-        { subject: 'Arm Vigor', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 85, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalRollUp(lm) {
-    const e = makeEval('Roll-Up');
-    const reach = clamp(100 - calculateDistance(lm[LM.LEFT_WRIST], lm[LM.LEFT_ANKLE]) * 200);
-    e.indicators.Articulation = reach;
-    if (reach < 70) e.feedback.push('Peel spine off mat one vertebra at a time.');
-    e.radarData = [
-        { subject: 'Articulation', A: reach, fullMark: 100 },
-        { subject: 'Abdominal Strength', A: 90, fullMark: 100 },
-        { subject: 'Hamstring Flexibility', A: 80, fullMark: 100 },
-        { subject: 'Shoulder Relax', A: 85, fullMark: 100 },
-        { subject: 'Flow', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalRollOver(lm) {
-    const e = makeEval('Roll Over');
-    const ankleOverHead = lm[LM.LEFT_ANKLE].y < lm[LM.LEFT_SHOULDER].y;
-    const controlScore = ankleOverHead ? 85 : 55;
-    const legStraight = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Control = controlScore;
-    if (!ankleOverHead) e.feedback.push('Bring legs further overhead with control.');
-    e.radarData = [
-        { subject: 'Spinal Mobility', A: controlScore, fullMark: 100 },
-        { subject: 'Abdominal Control', A: 85, fullMark: 100 },
-        { subject: 'Leg Extension', A: legStraight, fullMark: 100 },
-        { subject: 'Precision', A: 80, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalOneLegCircle(lm) {
-    const e = makeEval('One-Leg Circle');
-    const legStraight = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Flexibility = legStraight;
-    if (legStraight < 80) e.feedback.push('Extend reaching leg fully.');
-    e.radarData = [
-        { subject: 'Pelvic Stability', A: 80, fullMark: 100 },
-        { subject: 'Hip Mobility', A: 85, fullMark: 100 },
-        { subject: 'Leg Straightness', A: legStraight, fullMark: 100 },
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalRollingLikeABall(lm) {
-    const e = makeEval('Rolling Like a Ball');
-    const compact = clamp(100 - calculateDistance(lm[LM.LEFT_KNEE], lm[LM.LEFT_SHOULDER]) * 300);
-    e.indicators.Compactness = compact;
-    if (compact < 70) e.feedback.push('Tuck tighter — heels close to sit bones.');
-    e.radarData = [
-        { subject: 'Balance', A: 80, fullMark: 100 },
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Compactness', A: compact, fullMark: 100 },
-        { subject: 'Spinal Massage', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalOneLegStretch(lm) {
-    const e = makeEval('One-Leg Stretch');
-    const lLeg = calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]);
-    const rLeg = calculateAngle(lm[LM.RIGHT_HIP], lm[LM.RIGHT_KNEE], lm[LM.RIGHT_ANKLE]);
-    const extension = clamp((Math.max(lLeg, rLeg) / 180) * 100);
-    e.indicators.Extension = extension;
-    if (extension < 80) e.feedback.push('Extend the straight leg further from center.');
-    e.radarData = [
-        { subject: 'Core Stability', A: 85, fullMark: 100 },
-        { subject: 'Leg Extension', A: extension, fullMark: 100 },
-        { subject: 'Pelvic Control', A: 80, fullMark: 100 },
-        { subject: 'Coordination', A: 85, fullMark: 100 },
-        { subject: 'Breath', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalDoubleLegStretch(lm) {
-    const e = makeEval('Double-Leg Stretch');
-    const legExt = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    const armReach = lm[LM.LEFT_WRIST].y < lm[LM.LEFT_SHOULDER].y ? 90 : 60;
-    e.indicators.Extension = legExt;
-    if (legExt < 80) e.feedback.push('Reach arms and legs further from center.');
-    e.radarData = [
-        { subject: 'Core Power', A: 85, fullMark: 100 },
-        { subject: 'Leg Extension', A: legExt, fullMark: 100 },
-        { subject: 'Arm Reach', A: armReach, fullMark: 100 },
-        { subject: 'Coordination', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 85, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSpineStretch(lm) {
-    const e = makeEval('Spine Stretch');
-    const legStraight = calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]);
-    const posture = clamp((legStraight / 180) * 100);
-    e.indicators.Posture = posture;
-    if (posture < 85) e.feedback.push('Sit taller through the crown of your head.');
-    e.radarData = [
-        { subject: 'Posture', A: posture, fullMark: 100 },
-        { subject: 'Articulation', A: 85, fullMark: 100 },
-        { subject: 'Abdominal Scoop', A: 80, fullMark: 100 },
-        { subject: 'Shoulder Stability', A: 90, fullMark: 100 },
-        { subject: 'Breath', A: 85, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalOpenLegRocker(lm) {
-    const e = makeEval('Open-Leg Rocker');
-    const legExt = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    const balance = 80;
-    e.indicators.Balance = balance;
-    if (legExt < 80) e.feedback.push('Straighten legs while maintaining balance.');
-    e.radarData = [
-        { subject: 'Balance', A: balance, fullMark: 100 },
-        { subject: 'Hamstring Flexibility', A: legExt, fullMark: 100 },
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Spinal Articulation', A: 80, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalCorkscrew(lm) {
-    const e = makeEval('Corkscrew');
-    const legStraight = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Control = legStraight;
-    if (legStraight < 80) e.feedback.push('Keep legs together and straight during circles.');
-    e.radarData = [
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Pelvic Stability', A: 80, fullMark: 100 },
-        { subject: 'Leg Extension', A: legStraight, fullMark: 100 },
-        { subject: 'Spinal Mobility', A: 80, fullMark: 100 },
-        { subject: 'Precision', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalTheSaw(lm) {
-    const e = makeEval('The Saw');
-    const rotation = clamp(Math.abs(lm[LM.LEFT_SHOULDER].x - lm[LM.RIGHT_SHOULDER].x) * 300);
-    const reach = clamp(100 - calculateDistance(lm[LM.LEFT_WRIST], lm[LM.RIGHT_ANKLE]) * 200);
-    e.indicators.Rotation = rotation;
-    if (rotation < 60) e.feedback.push('Rotate torso more — think of wringing out a towel.');
-    e.radarData = [
-        { subject: 'Rotation', A: rotation, fullMark: 100 },
-        { subject: 'Reach', A: reach, fullMark: 100 },
-        { subject: 'Hamstring Flex', A: 80, fullMark: 100 },
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Breath', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSwanDive(lm) {
-    const e = makeEval('Swan Dive');
-    const sh = mid(lm[LM.LEFT_SHOULDER], lm[LM.RIGHT_SHOULDER]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const liftHeight = clamp((hp.y - sh.y) * 500);
-    e.indicators.Extension = liftHeight;
-    if (liftHeight < 60) e.feedback.push('Press through palms to lift chest higher.');
-    e.radarData = [
-        { subject: 'Back Extension', A: liftHeight, fullMark: 100 },
-        { subject: 'Core Support', A: 85, fullMark: 100 },
-        { subject: 'Shoulder Opening', A: 80, fullMark: 100 },
-        { subject: 'Glute Engagement', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalOneLegKick(lm) {
-    const e = makeEval('One-Leg Kick');
-    const kickAngle = Math.min(calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]),
-        calculateAngle(lm[LM.RIGHT_HIP], lm[LM.RIGHT_KNEE], lm[LM.RIGHT_ANKLE]));
-    const kickDepth = clamp(100 - (kickAngle / 180) * 100);
-    e.indicators.KickDepth = kickDepth;
-    if (kickDepth < 60) e.feedback.push('Kick heel closer to glute with control.');
-    e.radarData = [
-        { subject: 'Hamstring Strength', A: kickDepth, fullMark: 100 },
-        { subject: 'Glute Activation', A: 85, fullMark: 100 },
-        { subject: 'Core Stability', A: 80, fullMark: 100 },
-        { subject: 'Upper Body', A: 80, fullMark: 100 },
-        { subject: 'Rhythm', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalDoubleLegKick(lm) {
-    const e = makeEval('Double-Leg Kick');
-    const lKick = calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]);
-    const rKick = calculateAngle(lm[LM.RIGHT_HIP], lm[LM.RIGHT_KNEE], lm[LM.RIGHT_ANKLE]);
-    const symmetry = clamp(100 - Math.abs(lKick - rKick) * 3);
-    e.indicators.Symmetry = symmetry;
-    if (symmetry < 80) e.feedback.push('Keep both legs kicking evenly.');
-    e.radarData = [
-        { subject: 'Posterior Chain', A: 85, fullMark: 100 },
-        { subject: 'Symmetry', A: symmetry, fullMark: 100 },
-        { subject: 'Back Extension', A: 80, fullMark: 100 },
-        { subject: 'Coordination', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalNeckPull(lm) {
-    const e = makeEval('Neck Pull');
-    const handPos = calculateDistance(lm[LM.LEFT_WRIST], lm[LM.NOSE]);
-    const handsAtHead = handPos < 0.15 ? 90 : 60;
-    const rollControl = 80;
-    e.indicators.Articulation = rollControl;
-    if (handsAtHead < 70) e.feedback.push('Keep hands behind head throughout the movement.');
-    e.radarData = [
-        { subject: 'Spinal Articulation', A: rollControl, fullMark: 100 },
-        { subject: 'Abdominal Strength', A: 85, fullMark: 100 },
-        { subject: 'Hand Position', A: handsAtHead, fullMark: 100 },
-        { subject: 'Control', A: 80, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalScissors(lm) {
-    const e = makeEval('Scissors');
-    const split = Math.abs(lm[LM.LEFT_ANKLE].y - lm[LM.RIGHT_ANKLE].y);
-    const splitScore = clamp(split * 400);
-    const legStraight = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Split = splitScore;
-    if (splitScore < 60) e.feedback.push('Open the scissors wider with control.');
-    e.radarData = [
-        { subject: 'Hip Flexibility', A: splitScore, fullMark: 100 },
-        { subject: 'Leg Extension', A: legStraight, fullMark: 100 },
-        { subject: 'Core Stability', A: 85, fullMark: 100 },
-        { subject: 'Shoulder Support', A: 80, fullMark: 100 },
-        { subject: 'Precision', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalBicycle(lm) {
-    const e = makeEval('Bicycle');
-    const lLeg = calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]);
-    const rLeg = calculateAngle(lm[LM.RIGHT_HIP], lm[LM.RIGHT_KNEE], lm[LM.RIGHT_ANKLE]);
-    const range = clamp(Math.abs(lLeg - rLeg) * 2);
-    e.indicators.Range = range;
-    if (range < 50) e.feedback.push('Exaggerate the cycling motion — full extension on each pedal.');
-    e.radarData = [
-        { subject: 'Range of Motion', A: range, fullMark: 100 },
-        { subject: 'Core Stability', A: 85, fullMark: 100 },
-        { subject: 'Coordination', A: 80, fullMark: 100 },
-        { subject: 'Spinal Mobility', A: 80, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalShoulderBridge(lm) {
-    const e = makeEval('Shoulder Bridge');
-    const bodyAngle = calculateAngle(lm[LM.LEFT_SHOULDER], lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE]);
-    const alignment = clamp(100 - Math.abs(180 - bodyAngle));
-    const kneeAng = calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]);
-    e.indicators.Alignment = alignment;
-    if (bodyAngle < 160) e.feedback.push('Lift hips higher to create a straight line.');
-    e.radarData = [
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Glute Strength', A: 80, fullMark: 100 },
-        { subject: 'Alignment', A: alignment, fullMark: 100 },
-        { subject: 'Stability', A: 85, fullMark: 100 },
-        { subject: 'Breath', A: 70, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSpineTwist(lm) {
-    const e = makeEval('Spine Twist');
-    const shoulderW = Math.abs(lm[LM.LEFT_SHOULDER].x - lm[LM.RIGHT_SHOULDER].x);
-    const hipW = Math.abs(lm[LM.LEFT_HIP].x - lm[LM.RIGHT_HIP].x);
-    const rotationScore = clamp((1 - shoulderW / (hipW + 0.01)) * 150);
-    e.indicators.Rotation = rotationScore;
-    if (rotationScore < 60) e.feedback.push('Rotate further — feel the twist through your entire spine.');
-    e.radarData = [
-        { subject: 'Rotation', A: rotationScore, fullMark: 100 },
-        { subject: 'Spinal Mobility', A: 85, fullMark: 100 },
-        { subject: 'Oblique Strength', A: 80, fullMark: 100 },
-        { subject: 'Posture', A: 85, fullMark: 100 },
-        { subject: 'Breath', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalJackknife(lm) {
-    const e = makeEval('Jackknife');
-    const an = mid(lm[LM.LEFT_ANKLE], lm[LM.RIGHT_ANKLE]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const heightScore = clamp((hp.y - an.y) * 500);
-    const legStraight = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Height = heightScore;
-    if (heightScore < 60) e.feedback.push('Drive legs straight up toward the ceiling.');
-    e.radarData = [
-        { subject: 'Abdominal Power', A: 85, fullMark: 100 },
-        { subject: 'Height', A: heightScore, fullMark: 100 },
-        { subject: 'Leg Extension', A: legStraight, fullMark: 100 },
-        { subject: 'Spinal Articulation', A: 80, fullMark: 100 },
-        { subject: 'Control', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSideKick(lm) {
-    const e = makeEval('Side Kick');
-    const legSpread = Math.abs(lm[LM.LEFT_ANKLE].x - lm[LM.RIGHT_ANKLE].x);
-    const kickRange = clamp(legSpread * 400);
-    e.indicators.KickRange = kickRange;
-    if (kickRange < 60) e.feedback.push('Kick leg further front and back while keeping torso stable.');
-    e.radarData = [
-        { subject: 'Lateral Stability', A: 85, fullMark: 100 },
-        { subject: 'Kick Range', A: kickRange, fullMark: 100 },
-        { subject: 'Core Control', A: 80, fullMark: 100 },
-        { subject: 'Hip Mobility', A: 80, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalTeaser(lm) {
-    const e = makeEval('Teaser');
-    const legExt = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    const sh = mid(lm[LM.LEFT_SHOULDER], lm[LM.RIGHT_SHOULDER]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const balance = clamp((hp.y - sh.y) * 400);
-    e.indicators.Balance = balance;
-    if (legExt < 80) e.feedback.push('Extend legs fully to achieve the V-shape.');
-    e.radarData = [
-        { subject: 'Balance', A: balance, fullMark: 100 },
-        { subject: 'Core Strength', A: 90, fullMark: 100 },
-        { subject: 'Leg Extension', A: legExt, fullMark: 100 },
-        { subject: 'Control', A: 85, fullMark: 100 },
-        { subject: 'Precision', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalHipTwist(lm) {
-    const e = makeEval('Hip Twist');
-    const legExt = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Control = 80;
-    e.radarData = [
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Hip Mobility', A: 80, fullMark: 100 },
-        { subject: 'Leg Extension', A: legExt, fullMark: 100 },
-        { subject: 'Shoulder Stability', A: 80, fullMark: 100 },
-        { subject: 'Precision', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSwimming(lm) {
-    const e = makeEval('Swimming');
-    const sh = mid(lm[LM.LEFT_SHOULDER], lm[LM.RIGHT_SHOULDER]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const liftScore = clamp((hp.y - sh.y) * 400);
-    e.indicators.Extension = liftScore;
-    if (liftScore < 60) e.feedback.push('Lift chest and legs higher off the mat.');
-    e.radarData = [
-        { subject: 'Back Extension', A: liftScore, fullMark: 100 },
-        { subject: 'Glute Activation', A: 85, fullMark: 100 },
-        { subject: 'Coordination', A: 80, fullMark: 100 },
-        { subject: 'Stamina', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalLegPullFront(lm) {
-    const e = makeEval('Leg Pull Front');
-    const sh = mid(lm[LM.LEFT_SHOULDER], lm[LM.RIGHT_SHOULDER]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const plankLine = clamp(100 - Math.abs(sh.y - hp.y) * 500);
-    e.indicators.Alignment = plankLine;
-    if (plankLine < 70) e.feedback.push('Keep hips level — avoid sagging or piking.');
-    e.radarData = [
-        { subject: 'Plank Alignment', A: plankLine, fullMark: 100 },
-        { subject: 'Core Stability', A: 85, fullMark: 100 },
-        { subject: 'Shoulder Strength', A: 80, fullMark: 100 },
-        { subject: 'Glute Activation', A: 80, fullMark: 100 },
-        { subject: 'Control', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalLegPullBack(lm) {
-    const e = makeEval('Leg Pull Back');
-    const sh = mid(lm[LM.LEFT_SHOULDER], lm[LM.RIGHT_SHOULDER]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const plankLine = clamp(100 - Math.abs(sh.y - hp.y) * 500);
-    e.indicators.Alignment = plankLine;
-    if (plankLine < 70) e.feedback.push('Press hips up to form a straight line.');
-    e.radarData = [
-        { subject: 'Reverse Plank', A: plankLine, fullMark: 100 },
-        { subject: 'Triceps Strength', A: 80, fullMark: 100 },
-        { subject: 'Glute Activation', A: 85, fullMark: 100 },
-        { subject: 'Shoulder Stability', A: 80, fullMark: 100 },
-        { subject: 'Control', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalKneelingSideKick(lm) {
-    const e = makeEval('Kneeling Side Kick');
-    e.indicators.Balance = 80;
-    e.radarData = [
-        { subject: 'Balance', A: 80, fullMark: 100 },
-        { subject: 'Lateral Strength', A: 85, fullMark: 100 },
-        { subject: 'Core Control', A: 80, fullMark: 100 },
-        { subject: 'Hip Mobility', A: 80, fullMark: 100 },
-        { subject: 'Precision', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSideBend(lm) {
-    const e = makeEval('Side Bend');
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const liftScore = clamp((0.5 - hp.y) * 300);
-    e.indicators.Lift = liftScore;
-    if (liftScore < 60) e.feedback.push('Lift hips higher into the arc.');
-    e.radarData = [
-        { subject: 'Lateral Strength', A: liftScore, fullMark: 100 },
-        { subject: 'Shoulder Stability', A: 85, fullMark: 100 },
-        { subject: 'Core Control', A: 80, fullMark: 100 },
-        { subject: 'Hip Flexibility', A: 80, fullMark: 100 },
-        { subject: 'Flow', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalBoomerang(lm) {
-    const e = makeEval('Boomerang');
-    e.indicators.Flow = 80;
-    e.feedback.push('Maintain smooth transitions between phases.');
-    e.radarData = [
-        { subject: 'Flow', A: 80, fullMark: 100 },
-        { subject: 'Core Control', A: 85, fullMark: 100 },
-        { subject: 'Balance', A: 80, fullMark: 100 },
-        { subject: 'Coordination', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalSeal(lm) {
-    const e = makeEval('Seal');
-    const compact = clamp(100 - calculateDistance(lm[LM.LEFT_KNEE], lm[LM.LEFT_SHOULDER]) * 300);
-    e.indicators.Compactness = compact;
-    if (compact < 70) e.feedback.push('Hold tighter — clap feet three times at each end.');
-    e.radarData = [
-        { subject: 'Balance', A: 80, fullMark: 100 },
-        { subject: 'Core Activation', A: 85, fullMark: 100 },
-        { subject: 'Compactness', A: compact, fullMark: 100 },
-        { subject: 'Rhythm', A: 80, fullMark: 100 },
-        { subject: 'Playfulness', A: 85, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalCrab(lm) {
-    const e = makeEval('Crab');
-    const compact = clamp(100 - calculateDistance(lm[LM.LEFT_KNEE], lm[LM.LEFT_SHOULDER]) * 300);
-    e.indicators.Compactness = compact;
-    e.radarData = [
-        { subject: 'Balance', A: 80, fullMark: 100 },
-        { subject: 'Spinal Massage', A: 85, fullMark: 100 },
-        { subject: 'Compactness', A: compact, fullMark: 100 },
-        { subject: 'Coordination', A: 80, fullMark: 100 },
-        { subject: 'Control', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalRocking(lm) {
-    const e = makeEval('Rocking');
-    const holdAnkles = clamp(100 - (calculateDistance(lm[LM.LEFT_WRIST], lm[LM.LEFT_ANKLE]) + calculateDistance(lm[LM.RIGHT_WRIST], lm[LM.RIGHT_ANKLE])) * 200);
-    e.indicators.BackExtension = holdAnkles;
-    if (holdAnkles < 60) e.feedback.push('Hold ankles firmly and rock forward and back.');
-    e.radarData = [
-        { subject: 'Back Extension', A: holdAnkles, fullMark: 100 },
-        { subject: 'Quad Stretch', A: 80, fullMark: 100 },
-        { subject: 'Hip Flexor Opening', A: 80, fullMark: 100 },
-        { subject: 'Rhythm', A: 75, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalControlBalance(lm) {
-    const e = makeEval('Control Balance');
-    const legStraight = clamp((calculateAngle(lm[LM.LEFT_HIP], lm[LM.LEFT_KNEE], lm[LM.LEFT_ANKLE]) / 180) * 100);
-    e.indicators.Balance = 80;
-    e.radarData = [
-        { subject: 'Balance', A: 80, fullMark: 100 },
-        { subject: 'Core Stability', A: 90, fullMark: 100 },
-        { subject: 'Leg Extension', A: legStraight, fullMark: 100 },
-        { subject: 'Shoulder Strength', A: 80, fullMark: 100 },
-        { subject: 'Control', A: 85, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalPushUp(lm) {
-    const e = makeEval('Push-Up');
-    const elbowAngle = calculateAngle(lm[LM.LEFT_SHOULDER], lm[LM.LEFT_ELBOW], lm[LM.LEFT_WRIST]);
-    const depth = clamp(100 - (elbowAngle / 180) * 100);
-    const sh = mid(lm[LM.LEFT_SHOULDER], lm[LM.RIGHT_SHOULDER]);
-    const hp = mid(lm[LM.LEFT_HIP], lm[LM.RIGHT_HIP]);
-    const plankLine = clamp(100 - Math.abs(sh.y - hp.y) * 500);
-    e.indicators.Depth = depth;
-    if (plankLine < 70) e.feedback.push('Keep body in a straight line — avoid sagging hips.');
-    e.radarData = [
-        { subject: 'Plank Alignment', A: plankLine, fullMark: 100 },
-        { subject: 'Chest Strength', A: 80, fullMark: 100 },
-        { subject: 'Core Stability', A: 85, fullMark: 100 },
-        { subject: 'Shoulder Strength', A: 80, fullMark: 100 },
-        { subject: 'Control', A: 80, fullMark: 100 }
-    ];
-    return buildResult(e);
-}
-
-function evalChestLift(lm) {
-    const e = makeEval('Chest Lift');
-    const liftScore = (lm[LM.LEFT_HIP].y - lm[LM.LEFT_SHOULDER].y) > 0.1 ? 90 : 60;
-    e.indicators.Amplitude = liftScore;
-    if (liftScore < 80) e.feedback.push('Curl up higher using your abdominals.');
-    e.radarData = [
-        { subject: 'Core Strength', A: 85, fullMark: 100 },
-        { subject: 'Neck Comfort', A: 90, fullMark: 100 },
-        { subject: 'Lift Height', A: liftScore, fullMark: 100 },
-        { subject: 'Pelvic Neutral', A: 80, fullMark: 100 },
-        { subject: 'Breath', A: 75, fullMark: 100 }
-    ];
-    return buildResult(e);
-}

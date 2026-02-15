@@ -1,0 +1,325 @@
+/* Navbar.css */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    --bg-cream: #F9F9F7;
+    --text-dark: #1C1C1C;
+    --text-grey: #4A4A4A;
+    --btn-black: #1C1C1C;
+    /* User Requested Fonts */
+    --font-heading: 'Euclid Circular A', Helvetica, Arial, sans-serif;
+    --font-body: 'Euclid Circular A', Helvetica, Arial, sans-serif;
+}
+
+/* Navbar Container */
+.tpc-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+
+    /* Fixed & Transparent by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: transparent;
+    transition: background-color 0.3s ease, color 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Theme: Dark (White text on dark bg - Default for Home/Landing) */
+.tpc-navbar.dark {
+    color: white;
+}
+
+/* Theme: Light (Dark text on light bg - For Auth Pages) */
+.tpc-navbar.light {
+    color: var(--text-dark);
+}
+
+/* Scrolled State (Always White BG, Dark Text) */
+.tpc-navbar.scrolled {
+    background-color: white;
+    color: var(--text-dark);
+    /* Override theme color */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Three-column Layout Helpers */
+
+/* Left Nav (Classes) */
+.tpc-nav-left {
+    flex: 1;
+    /* Take up available space */
+    display: flex;
+    justify-content: flex-start;
+    /* Align content to the left */
+}
+
+/* Logo Styling (Center) */
+.tpc-logo {
+    flex: 0 0 auto;
+    /* Do not grow or shrink */
+    text-align: center;
+
+    /* Logo Font: 16px Euclid Circular A */
+    font-family: 'Euclid Circular A', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+}
+
+/* Nav Actions Container (Right) */
+.tpc-nav-actions {
+    flex: 1;
+    /* Take up available space */
+    display: flex;
+    justify-content: flex-end;
+    /* Align content to the right */
+    gap: 30px;
+    align-items: center;
+}
+
+.tpc-nav-link {
+    font-family: 'Euclid Circular A', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    padding: 0 10px;
+    /* Add padding for clickable area */
+}
+
+.tpc-nav-link:hover {
+    opacity: 0.7;
+}
+
+/* Community Link */
+.tpc-community-link {
+    font-family: 'Euclid Circular A', sans-serif;
+    text-decoration: none;
+    color: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    /* Add padding for clickable area */
+}
+
+.tpc-community-link:hover {
+    opacity: 0.7;
+}
+
+/* Link Styling */
+.tpc-link {
+    text-decoration: none;
+    color: inherit;
+    /* Inherit from navbar color */
+    font-family: 'Canela', 'Playfair Display', serif;
+    /* Consistent font */
+    font-size: 13px;
+    /* Requested size */
+    text-transform: none;
+    /* Natural case */
+    letter-spacing: 0.5px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .tpc-navbar {
+        padding: 20px;
+    }
+
+    /* On mobile, maybe hide classes or stack them? keeping simple for now */
+    .tpc-logo {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+/* Button Styling (e.g. Register) */
+.tpc-btn {
+    padding: 10px 20px;
+    background-color: var(--btn-black);
+    color: white;
+    border: 1px solid white;
+    /* Border for visibility on dark/transparent */
+    font-family: 'Canela', 'Playfair Display', serif;
+    text-transform: none;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 0;
+    /* Boxy minimalist look */
+}
+
+.tpc-btn:hover {
+    background-color: white;
+    color: var(--btn-black);
+}
+
+/* Adjust button for light theme (Dark text on light) */
+.tpc-navbar.light .tpc-btn {
+    background-color: transparent;
+    border-color: var(--text-dark);
+    color: var(--text-dark);
+}
+
+/* Absolute Positioning for AI Pages */
+.tpc-navbar.absolute-nav {
+    position: absolute !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    padding-top: 20px;
+    /* Give it some breathing room from top */
+}
+
+/* Profile Icon */
+.tpc-profile-icon {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    color: inherit;
+    /* Inherits from navbar color (white or dark) */
+    transition: opacity 0.3s ease;
+    display: flex;
+    /* Center SVG */
+    align-items: center;
+    justify-content: center;
+}
+
+.tpc-profile-icon:hover {
+    opacity: 0.7;
+}
+
+.tpc-profile-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Ensure buttons/text stay visible on hover in absolute mode */
+.tpc-navbar.absolute-nav:hover {
+    background-color: transparent !important;
+}
+
+/* --- Mobile Sidebar & Responsiveness --- */
+
+/* Default (Desktop) */
+.tpc-hamburger {
+    display: none;
+}
+
+.tpc-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background-color: #F9F9F7;
+    /* Match site bg */
+    z-index: 1200;
+    /* Higher than navbar */
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Smooth ease-out */
+    padding: 40px 40px;
+    /* Reduced top padding to make room for header */
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.tpc-sidebar-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+    margin-top: 60px;
+    /* Space from top */
+}
+
+.tpc-sidebar-signature {
+    height: 40px;
+    /* Adjust based on actual image aspect ratio */
+    width: auto;
+    object-fit: contain;
+}
+
+.tpc-sidebar.active {
+    transform: translateX(0);
+}
+
+.tpc-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1100;
+    /* Below sidebar, above navbar content */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+.tpc-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Mobile Sidebar Links */
+.tpc-nav-link-mobile,
+.tpc-community-link-mobile {
+    font-family: 'Canela', 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--text-dark);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .tpc-navbar {
+        padding: 20px;
+    }
+
+    /* Hide Desktop Links */
+    .desktop-only {
+        display: none !important;
+    }
+
+    /* Show Hamburger */
+    .tpc-hamburger {
+        display: flex;
+        align-items: center;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    .tpc-hamburger svg {
+        width: 100%;
+        height: 100%;
+    }
+}

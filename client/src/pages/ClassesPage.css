@@ -1,0 +1,233 @@
+/* ClassesPage.css */
+
+.classes-page {
+    /* Gradient from User Reference */
+    background: linear-gradient(180deg, #726EFF 0%, #124D00 25%, #08C6AB 50%, #37465B 80%, #212B38 100%);
+    min-height: 100vh;
+    padding-top: 80px;
+    /* Navbar space */
+    font-family: 'Euclid Circular A', sans-serif;
+    color: white;
+    /* Light text for dark bg */
+}
+
+.classes-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+.classes-main-header {
+    text-align: center;
+    margin-bottom: 80px;
+    padding: 60px 0;
+}
+
+.classes-hero-title {
+    font-family: 'Canela', 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 400;
+    margin-bottom: 20px;
+    color: white;
+    /* Ensure title is white */
+}
+
+.classes-hero-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    /* Slightly transparent white */
+}
+
+/* Category Section */
+.category-section {
+    margin-bottom: 120px;
+}
+
+.category-header {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    /* Text left, Image right (larger) */
+    gap: 60px;
+    align-items: center;
+    margin-bottom: 60px;
+}
+
+.category-info {
+    padding-right: 40px;
+}
+
+.category-title {
+    font-family: 'Canela', 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 400;
+    margin-bottom: 24px;
+    line-height: 1.1;
+    color: white;
+}
+
+.category-tags {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.intensity-pill,
+.duration-pill {
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.intensity-pill.satisfying {
+    background-color: rgba(224, 242, 241, 0.2);
+    /* Semi-transparent */
+    color: #E0F2F1;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.intensity-pill.sweaty,
+.intensity-pill.intense {
+    background-color: rgba(255, 235, 238, 0.2);
+    color: #FFEBEE;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.duration-pill {
+    background-color: rgba(238, 238, 238, 0.2);
+    color: #EEEEEE;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.category-description {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 32px;
+    max-width: 500px;
+}
+
+.btn-preview {
+    padding: 14px 28px;
+    background-color: white;
+    color: #1C1C1C;
+    /* Invert button for contrast */
+    border: none;
+    border-radius: 999px;
+    /* Pill shape */
+    font-family: 'Euclid Circular A', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn-preview:hover {
+    background-color: white;
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.category-image-container {
+    height: 500px;
+    border-radius: 4px;
+    /* Slight rounding or sharp */
+    overflow: hidden;
+}
+
+.category-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Most Popular Horizontal Scroll */
+.most-popular-section {
+    padding-bottom: 20px;
+}
+
+.most-popular-title {
+    font-family: 'Canela', 'Playfair Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    font-weight: 400;
+    color: white;
+}
+
+.classes-grid-scroll {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    /* Space for scrollbar if visible */
+}
+
+.class-card-small {
+    cursor: pointer;
+}
+
+.class-card-thumb {
+    background-color: #E0E0E0;
+    aspect-ratio: 16/9;
+    margin-bottom: 12px;
+    border-radius: 4px;
+}
+
+.class-card-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: white;
+    /* Light text */
+    font-weight: 500;
+}
+
+.class-card-duration {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Mobile Responsive */
+@media (max-width: 968px) {
+    .category-header {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .category-image-container {
+        height: 300px;
+        order: -1;
+        /* Image first on mobile? Or text? keeping text first usually better for context, but visual first is wow factor. Let's keep text first for now or move image up. */
+    }
+
+    .classes-grid-scroll {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 cols on tablet */
+    }
+}
+
+@media (max-width: 600px) {
+    .classes-hero-title {
+        font-size: 2.5rem;
+    }
+
+    .category-title {
+        font-size: 2.5rem;
+    }
+
+    .classes-grid-scroll {
+        grid-template-columns: 1fr;
+        /* 1 col or horizontal scroll */
+        /* To make it scrollable horizontally on mobile */
+        grid-auto-flow: column;
+        grid-auto-columns: 80%;
+        overflow-x: scroll;
+        scroll-snap-type: x mandatory;
+    }
+
+    .class-card-small {
+        scroll-snap-align: start;
+    }
+}

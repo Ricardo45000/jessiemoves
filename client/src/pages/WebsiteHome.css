@@ -1,0 +1,315 @@
+/* WebsiteHome.css */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    --bg-cream: #F9F9F7;
+    --text-dark: #1C1C1C;
+    --text-grey: #4A4A4A;
+    --btn-black: #1C1C1C;
+    --border-color: #E5E5E5;
+    /* User Requested Fonts */
+    --font-heading: 'Euclid Circular A', Helvetica, Arial, sans-serif;
+    --font-body: 'Euclid Circular A', Helvetica, Arial, sans-serif;
+}
+
+.tpc-container {
+    background-color: var(--bg-cream);
+    color: var(--text-dark);
+    font-family: var(--font-body);
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    padding-top: 0;
+    /* Hero touches top */
+}
+
+/* Headings Typography */
+.tpc-container h1,
+.tpc-container h2,
+.tpc-container h3 {
+    font-family: 'Canela', 'Playfair Display', serif;
+    font-weight: 400;
+}
+
+/* Navbar */
+/* Navbar styles moved to Navbar.css */
+
+/* Ensure links inherit the color change */
+.tpc-navbar .tpc-link {
+    color: inherit;
+    /* font-family: var(--font-body); Removed to inherit from .tpc-link */
+}
+
+.tpc-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+
+    /* Logo Font: 16px Euclid Circular A */
+    font-family: 'Euclid Circular A', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    /* Safari */
+    white-space: nowrap;
+}
+
+.tpc-nav-actions {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.tpc-link {
+    text-decoration: none;
+    color: var(--text-dark);
+    /* This will be overridden by navbar rules, but good fallback */
+    font-family: 'Canela', 'Playfair Display', serif;
+    /* Same as logo */
+    font-size: 13px;
+    /* Requested size */
+    text-transform: none;
+    /* Not all caps */
+    letter-spacing: 0.5px;
+}
+
+.tpc-btn {
+    padding: 12px 24px;
+    background-color: var(--btn-black);
+    color: white;
+    border: none;
+    font-family: 'Canela', 'Playfair Display', serif;
+    /* Consistent font */
+    text-transform: none;
+    /* Not all caps */
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.tpc-btn:hover {
+    opacity: 0.8;
+}
+
+/* Hero */
+.tpc-hero {
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-image: url('https://images.unsplash.com/photo-1747239685045-fcbcf98985db?q=80&w=3132&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    /* Placeholder high-quality pilates image */
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.tpc-hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    /* Slight overlay */
+}
+
+.tpc-hero-content {
+    position: relative;
+    z-index: 1;
+    color: white;
+    max-width: 800px;
+    padding: 0 20px;
+}
+
+.tpc-hero-title {
+    font-family: 'Canela', 'Playfair Display', serif;
+    /* Updated per request */
+    font-size: 5rem;
+    font-weight: 400;
+    margin-bottom: 20px;
+    line-height: 1.1;
+}
+
+.tpc-hero-subtitle {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    font-weight: 300;
+    color: white;
+    /* Updated per request */
+}
+
+/* Sections General */
+.tpc-section {
+    padding: 80px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.tpc-section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.tpc-section-title {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    margin-bottom: 20px;
+    font-weight: 400;
+    color: #000000;
+    /* Pure black per request */
+}
+
+.tpc-section-desc {
+    font-size: 1.1rem;
+    color: var(--text-grey);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Classes Grid */
+.tpc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+}
+
+.tpc-card {
+    text-align: left;
+}
+
+.tpc-card-img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    background-color: #ddd;
+    margin-bottom: 20px;
+}
+
+.tpc-card-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #000000;
+    /* Pure black per request */
+}
+
+.tpc-card-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-grey);
+}
+
+/* Instructors - Horizontal Scroll */
+.tpc-instructor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.tpc-instructor-card {
+    text-align: center;
+}
+
+.tpc-instructor-img {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+/* Testimonials */
+.tpc-testimonial-bg {
+    background-color: white;
+    padding: 100px 40px;
+}
+
+.tpc-quote {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    line-height: 1.4;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto 30px auto;
+    font-style: italic;
+}
+
+.tpc-quote-author {
+    text-align: center;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-grey);
+}
+
+/* Footer */
+.tpc-footer {
+    background-color: #1A1A1A;
+    color: white;
+    padding: 60px 40px;
+    text-align: center;
+}
+
+.tpc-footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.tpc-footer-link {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.tpc-footer-link:hover {
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tpc-hero-title {
+        font-size: 3rem;
+    }
+
+    .tpc-navbar {
+        padding: 20px;
+    }
+
+    .tpc-section {
+        padding: 60px 20px;
+    }
+}
+
+/* Landscape Mode Fix */
+@media (max-height: 600px) and (orientation: landscape) {
+    .tpc-hero-title {
+        font-size: 2.5rem;
+        /* Much smaller for short landscape screens */
+        margin-bottom: 10px;
+    }
+
+    .tpc-hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+
+    .tpc-hero-content {
+        max-width: 90%;
+    }
+
+    .tpc-section {
+        padding: 40px 20px;
+    }
+}

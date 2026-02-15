@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
-import './PremiumPage.css'; // We'll create this next
+import Navbar from '../components/Navbar';
+import './PremiumPage.css';
 
 const PremiumPage = () => {
 
@@ -22,6 +23,7 @@ const PremiumPage = () => {
 
     return (
         <div className="premium-page">
+            <Navbar theme="dark" alwaysTransparent={true} />
             <div className="premium-hero">
                 <h1>Unlock Your Full Potential</h1>
                 <p>Get personalized AI coaching, advanced analytics, and exclusive content.</p>

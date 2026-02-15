@@ -6,6 +6,8 @@ import MediaAnalysis from './components/MediaAnalysis';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
+import WebsiteHome from './pages/WebsiteHome';
+import ClassesPage from './pages/ClassesPage';
 import PremiumPage from './pages/PremiumPage';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import './App.css';
@@ -66,10 +68,10 @@ const MainApp = ({ initialMode = 'home' }) => {
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="loading-container">Loading...</div>;
+  if (loading) return <div className="loading-container">Loading Application...</div>;
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/ai/login" replace />;
   }
 
   return children;
@@ -79,10 +81,10 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div></div>;
+  if (loading) return <div className="loading-container">Loading...</div>;
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/ai/dashboard" replace />;
   }
 
   return children;
@@ -93,28 +95,33 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      {/* Main Website */}
+      <Route path="/" element={<WebsiteHome />} />
+      <Route path="/classes" element={<ClassesPage />} />
+
+      {/* AI App Landing */}
+      <Route path="/ai" element={<LandingPage />} />
 
       <Route
-        path="/login"
+        path="/ai/login"
         element={
           <PublicRoute>
-            <LoginPage onSwitchToRegister={() => navigate('/register')} />
+            <LoginPage onSwitchToRegister={() => navigate('/ai/register')} />
           </PublicRoute>
         }
       />
 
       <Route
-        path="/register"
+        path="/ai/register"
         element={
           <PublicRoute>
-            <RegisterPage onSwitchToLogin={() => navigate('/login')} />
+            <RegisterPage onSwitchToLogin={() => navigate('/ai/login')} />
           </PublicRoute>
         }
       />
 
       <Route
-        path="/dashboard"
+        path="/ai/dashboard"
         element={
           <ProtectedRoute>
             <MainApp initialMode="home" />
@@ -123,7 +130,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/upload"
+        path="/ai/upload"
         element={
           <ProtectedRoute>
             <MainApp initialMode="upload" />
@@ -132,7 +139,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/premium"
+        path="/ai/premium"
         element={
           <ProtectedRoute>
             <PremiumPage />
@@ -140,7 +147,12 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Catch all - redirect to home */}
+      {/* Legacy Redirects - Catch old bookmarks */}
+      <Route path="/login" element={<Navigate to="/ai/login" replace />} />
+      <Route path="/register" element={<Navigate to="/ai/register" replace />} />
+      <Route path="/dashboard" element={<Navigate to="/ai/dashboard" replace />} />
+
+      {/* Catch all - redirect to Website Home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

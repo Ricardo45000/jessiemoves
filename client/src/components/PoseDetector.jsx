@@ -69,27 +69,40 @@ const PoseDetector = () => {
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-        // Draw the overlay
+        // 0. Always Draw Skeleton First (Resilience)
         if (results.poseLandmarks) {
-            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-                color: '#00FF00',
-                lineWidth: 4,
-            });
-            drawLandmarks(canvasCtx, results.poseLandmarks, {
-                color: '#FF0000',
-                lineWidth: 2,
-                radius: 3,
-            });
+            try {
+                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+                    color: '#00FF00',
+                    lineWidth: 4,
+                });
+                drawLandmarks(canvasCtx, results.poseLandmarks, {
+                    color: '#FF0000',
+                    lineWidth: 2,
+                    radius: 3,
+                });
+            } catch (e) {
+                console.error("Drawing error:", e);
+            }
 
             // 1. Classify Pose
-            const poseAnalysis = classifyPose(results.poseLandmarks);
+            let poseAnalysis = null;
+            try {
+                poseAnalysis = classifyPose(results.poseLandmarks);
+            } catch (error) {
+                console.error("Classification Error:", error);
+            }
+
             setDetectedPose(poseAnalysis);
 
             let currentFeedback = null;
 
-            if (poseAnalysis && poseAnalysis.name !== 'Unknown') {
+            // Use rawName for feedback/radar if available, so we see it during 'Entering'
+            const poseNameForEval = poseAnalysis ? (poseAnalysis.rawName || poseAnalysis.name) : null;
+
+            if (poseNameForEval && poseNameForEval !== 'Unknown') {
                 // 2. Evaluate Pose Quality
-                currentFeedback = evaluatePose(results.poseLandmarks, poseAnalysis.name);
+                currentFeedback = evaluatePose(results.poseLandmarks, poseNameForEval);
                 setPoseFeedback(currentFeedback);
 
                 // Draw Text Overlay
@@ -98,11 +111,11 @@ const PoseDetector = () => {
 
                 canvasCtx.font = "bold 40px Arial";
                 canvasCtx.fillStyle = "#00FF00";
-                canvasCtx.fillText(poseAnalysis.name, 20, 50);
+                canvasCtx.fillText(poseAnalysis ? poseAnalysis.name : poseNameForEval, 20, 50);
 
                 canvasCtx.font = "20px Arial";
                 canvasCtx.fillStyle = "white";
-                canvasCtx.fillText(`Confidence: ${(poseAnalysis.confidence * 100).toFixed(0)}%`, 20, 80);
+                canvasCtx.fillText(`Confidence: ${(poseAnalysis ? poseAnalysis.score * 100 : 0).toFixed(0)}%`, 20, 80);
 
                 if (currentFeedback) {
                     // Draw Indicators

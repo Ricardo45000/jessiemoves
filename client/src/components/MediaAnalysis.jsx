@@ -3,6 +3,8 @@ import { classifyPose } from '../utils/poseClassifier';
 import { evaluatePose } from '../utils/poseEvaluator';
 import { getRecommendation } from '../utils/recommendationEngine';
 import { analyzeVideoSequence } from '../utils/videoSequenceAnalyzer';
+import { normalizeLandmarks } from '../utils/poseUtils'; // Ensure utils are imported if needed
+import { capturePose } from '../utils/poseLibrary';
 import { generateSessionReport } from '../utils/pdfGenerator';
 import FeedbackRadar from './FeedbackRadar';
 import ScoreCard from './ScoreCard';
@@ -21,6 +23,8 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
     // New State for Dashboard
     const [dashboardData, setDashboardData] = useState(null);
     const [recommendation, setRecommendation] = useState(null);
+    const [capturedJSON, setCapturedJSON] = useState(''); // Dev Tool State
+    const [poseName, setPoseName] = useState(''); // Input for capture
 
     useEffect(() => {
         const { Pose, POSE_CONNECTIONS } = window;
@@ -115,22 +119,106 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                 radius: 3,
             });
 
-            // Analyze and Log
-            const classification = classifyPose(results.poseLandmarks);
+            // Classify the detected pose
+            let classification = null;
+            try {
+                classification = classifyPose(results.poseLandmarks);
+            } catch (err) {
+                console.error("Pose Classification Error:", err);
+                classification = { name: "Unknown", rawName: "Unknown", score: 0 };
+            }
 
-            if (classification && classification.name !== 'Unknown') {
-                const evaluation = evaluatePose(results.poseLandmarks, classification.name);
-                setDashboardData(evaluation);
+            // --- DEVELOPER MODE: Expose for Capture ---
+            window.latestLandmarks = results.poseLandmarks;
+            if (!window.capturePose) window.capturePose = capturePose;
+            // ------------------------------------------
 
-                // Get Recommendation
+            // Determine which pose name to evaluate with
+            // Only trust classification when cosine similarity > 0.65
+            const score = classification ? classification.score : 0;
+            const MIN_CONFIDENCE = 0.65;
+
+            let bestName = null;
+            if (score >= MIN_CONFIDENCE) {
+                bestName = (classification.name !== 'Unknown' && classification.name !== 'Error')
+                    ? classification.name
+                    : (classification.rawName && classification.rawName !== 'Unknown')
+                        ? classification.rawName
+                        : null;
+            }
+
+            if (bestName) {
+                const evaluation = evaluatePose(results.poseLandmarks, bestName);
                 if (evaluation) {
+                    evaluation.confidence = Math.round(score * 100);
+                    setDashboardData(evaluation);
                     const rec = getRecommendation(evaluation.pose, evaluation.radarData, evaluation.level);
                     setRecommendation(rec);
                 }
+            } else {
+                // Body detected but confidence too low for reliable classification
+                const candidateName = classification ? (classification.name !== 'Unknown' ? classification.name : classification.rawName) : null;
+                setDashboardData({
+                    pose: candidateName && candidateName !== 'Unknown'
+                        ? `${candidateName} (${Math.round(score * 100)}%)`
+                        : 'Analyzing...',
+                    globalScore: 0,
+                    level: '—',
+                    prioritizedTip: 'Capture real pose vectors with the Dev Tool for accurate detection',
+                    indicators: {},
+                    feedback: ['Low match confidence — library vectors need real captures'],
+                    radarData: [],
+                    confidence: Math.round(score * 100)
+                });
             }
         }
 
         canvasCtx.restore();
+    };
+
+    const [captureCount, setCaptureCount] = useState(0);
+
+    const handleCapturePose = async () => {
+        if (!window.latestLandmarks) {
+            alert("No pose detected! Play the video until a skeleton appears, then pause.");
+            return;
+        }
+
+        const name = poseName.trim() || "New Pose";
+
+        const vector = normalizeLandmarks(window.latestLandmarks);
+        if (!vector) {
+            alert("Landmarks not visible enough. Try a clearer frame.");
+            return;
+        }
+
+        const arrayData = Array.from(vector);
+        const vectorString = `new Float32Array([${arrayData.map(n => n.toFixed(4)).join(', ')}])`;
+
+        // Full entry for poseLibrary.js
+        const output = `    {
+        name: "${name}",
+        vector: ${vectorString},
+        difficulty: "Beginner"
+    },`;
+
+        // Store in session for batch retrieval
+        if (!window.capturedPoses) window.capturedPoses = [];
+        window.capturedPoses.push({ name, vectorString, output });
+
+        // Auto-copy to clipboard
+        try {
+            await navigator.clipboard.writeText(output);
+        } catch (e) {
+            console.warn("Clipboard copy failed:", e);
+        }
+
+        setCapturedJSON(output);
+        setCaptureCount(prev => prev + 1);
+
+        console.log(`%c[✅ CAPTURED] ${name} (#${window.capturedPoses.length})`, "color: #00ff00; font-weight: bold; font-size: 14px;");
+        console.log(output);
+        console.log(`%cAll captures: window.capturedPoses (${window.capturedPoses.length} total)`, "color: #888; font-size: 11px;");
     };
 
     const handleAnalyzeSequence = async () => {
@@ -187,6 +275,41 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                     ← Back to Upload
                 </button>
 
+                {/* --- DEV TOOL --- */}
+                <div style={{ marginBottom: '20px', padding: '10px', background: 'rgba(255, 64, 129, 0.1)', borderRadius: '8px', border: '1px dashed #ff4081' }}>
+                    <h4 style={{ color: '#ff4081', margin: '0 0 5px 0', fontSize: '12px', textTransform: 'uppercase' }}>
+                        🔧 Capture Tool {captureCount > 0 && <span style={{ background: '#ff4081', color: 'white', borderRadius: '10px', padding: '1px 6px', marginLeft: '6px', fontSize: '10px' }}>{captureCount}</span>}
+                    </h4>
+                    <p style={{ color: '#888', fontSize: '10px', margin: '0 0 8px 0' }}>Pause on a clear pose → type name → capture</p>
+
+                    <input
+                        type="text"
+                        placeholder="Exercise Name (e.g. The Hundred)"
+                        value={poseName}
+                        onChange={(e) => setPoseName(e.target.value)}
+                        style={{ width: '100%', padding: '8px', marginBottom: '8px', background: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+
+                    <button
+                        onClick={handleCapturePose}
+                        style={{ width: '100%', padding: '8px', background: '#ff4081', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                    >
+                        📸 Capture Current Pose
+                    </button>
+                    {capturedJSON && (
+                        <div style={{ marginTop: '10px' }}>
+                            <p style={{ color: '#4caf50', fontSize: '10px', margin: '0 0 5px 0', fontWeight: 'bold' }}>✅ Copied to clipboard! Paste into poseLibrary.js</p>
+                            <textarea
+                                readOnly
+                                value={capturedJSON}
+                                style={{ width: '100%', height: '80px', fontSize: '10px', background: '#000', color: '#0f0', border: '1px solid #333', borderRadius: '4px', resize: 'none', boxSizing: 'border-box' }}
+                                onClick={(e) => e.target.select()}
+                            />
+                        </div>
+                    )}
+                </div>
+                {/* ---------------- */}
+
                 {dashboardData ? (
                     <>
                         <h2 style={{ color: 'white', textAlign: 'center' }}>{dashboardData.pose}</h2>
@@ -220,15 +343,16 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         <button
-                                            onClick={() => generateSessionReport(sessionSummary, sequenceData)}
+                                            disabled={!sessionSummary}
+                                            onClick={() => sessionSummary && generateSessionReport(sessionSummary, sequenceData)}
                                             style={{
                                                 width: '100%',
                                                 padding: '12px',
-                                                background: '#4caf50',
+                                                background: sessionSummary ? '#4caf50' : '#888',
                                                 color: 'white',
                                                 border: 'none',
                                                 borderRadius: '5px',
-                                                cursor: 'pointer',
+                                                cursor: sessionSummary ? 'pointer' : 'not-allowed',
                                                 fontWeight: 'bold'
                                             }}
                                         >
@@ -404,7 +528,7 @@ const MediaAnalysis = ({ fileUrl, type, onBack }) => {
                     />
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
