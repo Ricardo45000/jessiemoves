@@ -77,7 +77,7 @@
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Typography */
-  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family: 'Euclid Circular A', Helvetica, Arial, sans-serif;
   --font-xs: 0.75rem;
   --font-sm: 0.875rem;
   --font-base: 1rem;
@@ -123,11 +123,11 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
-  /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  /* Radius - Super-ellipses aesthetic */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 48px;
   --radius-full: 9999px;
 
   /* Shadows */
@@ -137,10 +137,10 @@
   --shadow-glow-purple: 0 0 30px rgba(139, 92, 246, 0.15);
   --shadow-glow-pink: 0 0 30px rgba(236, 72, 153, 0.15);
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+  /* Transitions - Weighted Inertia (80/20 Rule) */
+  --transition-fast: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Layout */
   --container-max: 1200px;
@@ -170,12 +170,12 @@ html {
 }
 
 body {
-  font-family: 'Euclid Circular A', Helvetica, Arial, sans-serif;
+  font-family: var(--font-family);
   font-style: normal;
   font-weight: 400;
   font-size: 15px;
   line-height: 2;
-  letter-spacing: .01em;
+  letter-spacing: 0.01em;
   color: var(--text-primary);
   background-color: var(--bg-primary);
   min-height: 100vh;
@@ -186,6 +186,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   padding-top: var(--safe-top);
   padding-bottom: var(--safe-bottom);
+}
+
+/* Global Noise Texture */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04;
 }
 
 #root {
@@ -234,12 +248,12 @@ h3 {
 p,
 button,
 span {
-  font-family: 'Euclid Circular A', Helvetica, Arial, sans-serif;
+  font-family: var(--font-family);
   font-style: normal;
   font-weight: 400;
   font-size: 15px;
   line-height: 2;
-  letter-spacing: .01em;
+  letter-spacing: 0.01em;
 }
 
 p {
@@ -271,6 +285,7 @@ select {
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   -webkit-appearance: none;
+  appearance: none;
 }
 
 input:focus,
@@ -310,6 +325,7 @@ label {
 }
 
 /* ─── Scrollbar (Webkit) ────────────────────────────────────── */
+/*
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -326,6 +342,7 @@ label {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+*/
 
 /* ─── Utility Classes ───────────────────────────────────────── */
 .container {
