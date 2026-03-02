@@ -1,46 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import './ClassesPage.css';
 
 const ClassesPage = () => {
+    const [categories, setCategories] = useState([]);
+    const [classes, setClasses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
     useEffect(() => {
         window.scrollTo(0, 0);
+        fetchData();
     }, []);
 
-    const categories = [
-        {
-            id: 'essentials',
-            title: 'Essentials',
-            description: 'The foundation of the JM Method. Master the basics, improve your form, and build a strong connection to your core.',
-            image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=2670',
-            duration: '28 min',
-            intensity: 'Satisfying'
-        },
-        {
-            id: 'body',
-            title: 'Body',
-            description: 'Full body sculpting sequences designed to tone, lengthen, and strengthen every muscle group.',
-            image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=2670',
-            duration: '45 min',
-            intensity: 'Sweaty'
-        },
-        {
-            id: 'goals',
-            title: 'Goals',
-            description: 'Targeted classes to help you reach specific objectives, whether it\'s flexibility, posture, or glute strength.',
-            image: 'https://images.unsplash.com/photo-1588286840104-8957b019727f?auto=format&fit=crop&q=80&w=2670',
-            duration: '35 min',
-            intensity: 'Intense'
-        },
-        {
-            id: 'barre',
-            title: 'Barre',
-            description: 'A fusion of ballet-inspired moves, Pilates, and strength training. Expect high reps and a deep burn.',
-            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=2670',
-            duration: '30 min',
-            intensity: 'Satisfying'
+    const fetchData = async () => {
+        try {
+            const [catRes, clsRes] = await Promise.all([
+                fetch('/api/content/categories'),
+                fetch('/api/content/classes')
+            ]);
+
+            if (catRes.ok) setCategories(await catRes.json());
+            if (clsRes.ok) setClasses(await clsRes.json());
+
+        } catch (error) {
+            console.error('Failed to fetch content:', error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    if (loading) {
+        return (
+            <div className="classes-page">
+                <Navbar theme="dark" alwaysTransparent={false} />
+                <div style={{ padding: '150px 20px', textAlign: 'center', color: 'white' }}>Loading classes...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="classes-page">
@@ -70,18 +68,25 @@ const ClassesPage = () => {
                         </div>
 
                         <div className="most-popular-section">
-                            <h3 className="most-popular-title">Most Popular {category.title}</h3>
+                            <h3 className="most-popular-title">Classes in {category.title}</h3>
                             <div className="classes-grid-scroll">
-                                {/* Placeholder Content for Grid */}
-                                {[1, 2, 3, 4].map((item) => (
-                                    <div key={item} className="class-card-small">
-                                        <div className="class-card-thumb"></div>
+                                {classes.filter(c => c.categoryId === category.id).map((cls) => (
+                                    <div key={cls._id} className="class-card-small" onClick={() => navigate(`/play/${cls._id}`)}>
+                                        {/* Use thumbnail if exists, else fallback gradient */}
+                                        {cls.thumbnail ? (
+                                            <img src={cls.thumbnail} alt={cls.title} className="class-card-thumb" style={{ objectFit: 'cover' }} />
+                                        ) : (
+                                            <div className="class-card-thumb" style={{ background: 'linear-gradient(135deg, #1C1C1C 0%, #3a3a3a 100%)' }}></div>
+                                        )}
                                         <div className="class-card-meta">
-                                            <span className="class-card-title">{category.title} Flow {item}</span>
-                                            <span className="class-card-duration">20 min</span>
+                                            <span className="class-card-title">{cls.title}</span>
+                                            <span className="class-card-duration">{cls.duration}</span>
                                         </div>
                                     </div>
                                 ))}
+                                {classes.filter(c => c.categoryId === category.id).length === 0 && (
+                                    <p style={{ color: 'var(--text-muted)' }}>More classes coming soon!</p>
+                                )}
                             </div>
                         </div>
                     </section>

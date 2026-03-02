@@ -51,7 +51,8 @@ router.post('/register', async (req, res) => {
             res.status(201).json({
                 _id: user._id,
                 email: user.email,
-                profile: user.profile
+                profile: user.profile,
+                isAdmin: user.email === 'moloney.jessie@gmail.com'
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -83,7 +84,8 @@ router.post('/login', async (req, res) => {
             res.json({
                 _id: user._id,
                 email: user.email,
-                profile: user.profile
+                profile: user.profile,
+                isAdmin: user.email === 'moloney.jessie@gmail.com'
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
@@ -124,7 +126,11 @@ router.get('/me', async (req, res) => {
             return res.status(401).json({ message: 'Not authorized, user not found' });
         }
 
-        res.json(user);
+        // Add isAdmin flag dynamically based on email
+        const userResponse = user.toObject();
+        userResponse.isAdmin = user.email === 'moloney.jessie@gmail.com';
+
+        res.json(userResponse);
     } catch (error) {
         res.status(401).json({ message: 'Not authorized, token failed' });
     }

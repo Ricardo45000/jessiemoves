@@ -1,14 +1,12 @@
 /* ClassesPage.css */
 
 .classes-page {
-    /* Gradient from User Reference */
-    background: linear-gradient(180deg, #726EFF 0%, #124D00 25%, #08C6AB 50%, #37465B 80%, #212B38 100%);
+    background-color: var(--bg-primary);
     min-height: 100vh;
     padding-top: 80px;
     /* Navbar space */
-    font-family: 'Euclid Circular A', sans-serif;
-    color: white;
-    /* Light text for dark bg */
+    font-family: var(--font-family);
+    color: var(--text-primary);
 }
 
 .classes-container {
@@ -167,13 +165,16 @@
 
 .class-card-small {
     cursor: pointer;
+    width: 100%;
 }
 
 .class-card-thumb {
     background-color: #E0E0E0;
+    width: 100%;
     aspect-ratio: 16/9;
     margin-bottom: 12px;
     border-radius: 4px;
+    object-fit: cover;
 }
 
 .class-card-meta {

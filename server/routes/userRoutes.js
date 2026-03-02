@@ -20,6 +20,46 @@ const protect = async (req, res, next) => {
     }
 };
 
+// Admin Middleware
+const adminOnly = (req, res, next) => {
+    if (req.user && req.user.email === 'moloney.jessie@gmail.com') {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized as admin' });
+    }
+};
+
+// @route   GET /api/users
+// @desc    Get all users (Admin only)
+// @access  Private/Admin
+router.get('/', protect, adminOnly, async (req, res) => {
+    try {
+        const users = await User.find({}).select('-hashed_password');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// @route   DELETE /api/users/:id
+// @desc    Delete a user (Admin only)
+// @access  Private/Admin
+router.delete('/:id', protect, adminOnly, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (user) {
+            // Prevent deleting the main admin account as a safety measure
+            if (user.email === 'moloney.jessie@gmail.com') {
+                return res.status(400).json({ message: 'Cannot delete the master admin account' });
+            }
+            await User.findByIdAndDelete(req.params.id);
+            res.json({ message: 'User removed' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 // @route   POST /api/users/history
 // @desc    Add a new pose analysis to history
 // @access  Private

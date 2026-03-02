@@ -1,15 +1,34 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import './WebsiteHome.css';
 
 const WebsiteHome = () => {
     const navigate = useNavigate();
+    const [content, setContent] = useState(null);
 
-    // Scroll to top on mount
+    // Scroll to top and fetch data on mount
     useEffect(() => {
         window.scrollTo(0, 0);
+
+        const fetchContent = async () => {
+            try {
+                const res = await fetch('/api/content/homepage');
+                if (res.ok) {
+                    const data = await res.json();
+                    setContent(data);
+                }
+            } catch (err) {
+                console.error("Failed to load homepage content", err);
+            }
+        };
+
+        fetchContent();
     }, []);
+
+    if (!content) {
+        return <div style={{ height: '100vh', backgroundColor: '#000' }}></div>; // Simple black loading screen
+    }
 
     return (
         <div className="tpc-container">
@@ -17,12 +36,11 @@ const WebsiteHome = () => {
             <Navbar theme="dark" />
 
             {/* Hero Section */}
-            <header className="tpc-hero">
+            <header className="tpc-hero" style={content.hero?.backgroundImageUrl ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url(${content.hero.backgroundImageUrl})` } : {}}>
                 <div className="tpc-hero-content">
-                    <h1 className="tpc-hero-title">Moves for every mood.</h1>
+                    <h1 className="tpc-hero-title">{content.hero?.title || 'Moves for every mood.'}</h1>
                     <p className="tpc-hero-subtitle">
-                        The JM Method is a transformative approach designed to help you feel stronger, longer, and leaner,
-                        while releasing both physical and mental tension - so you can move with confidence. One class for every body!
+                        {content.hero?.subtitle || 'The JM Method is a transformative approach designed to help you feel stronger, longer, and leaner, while releasing both physical and mental tension - so you can move with confidence. One class for every body!'}
                     </p>
                     <button className="tpc-btn" style={{ padding: '16px 32px', fontSize: '14px' }} onClick={() => navigate('/ai/register')}>
                         Start 7 Day Free Trial
@@ -33,9 +51,9 @@ const WebsiteHome = () => {
             {/* Classes Section */}
             <section className="tpc-section">
                 <div className="tpc-section-header">
-                    <h2 className="tpc-section-title">My Classes</h2>
+                    <h2 className="tpc-section-title">{content.classesSection?.title || 'My Classes'}</h2>
                     <p className="tpc-section-desc">
-                        From high-intensity burn to restorative flows, I have designed something for every energy level.
+                        {content.classesSection?.description || 'From high-intensity burn to restorative flows, I have designed something for every energy level.'}
                     </p>
                 </div>
 
@@ -68,22 +86,20 @@ const WebsiteHome = () => {
             </section>
 
             {/* Instructors Section */}
-            <section className="tpc-section" style={{ backgroundColor: 'white' }}>
+            <section className="tpc-section tpc-instructor-section">
                 <div className="tpc-section-header">
-                    <h2 className="tpc-section-title">Meet Your Instructor</h2>
+                    <h2 className="tpc-section-title">{content.instructorSection?.title || 'Meet Your Instructor'}</h2>
                     <p className="tpc-section-desc">
-                        Guiding you through every breath and movement.
+                        {content.instructorSection?.description || 'Guiding you through every breath and movement.'}
                     </p>
                 </div>
                 <div className="tpc-instructor-grid" style={{ display: 'flex', justifyContent: 'center' }}>
                     <div className="tpc-instructor-card" style={{ maxWidth: '400px' }}>
-                        {/* Placeholder for the attached image - User needs to place 'jessie_pole.jpg' in public folder */}
-                        <img src="/jessie_pole.png" alt="Jessie" className="tpc-instructor-img" style={{ height: '500px', objectFit: 'cover' }} />
+                        <img src={content.instructorSection?.imageUrl || "/jessie_pole.png"} alt="Jessie" className="tpc-instructor-img" style={{ height: '500px', objectFit: 'cover' }} />
                         <h3 className="tpc-card-title">Jessie</h3>
                         <p className="tpc-card-text">Founder & Lead Instructor</p>
                         <p className="tpc-card-text" style={{ fontSize: '0.9rem', marginTop: '10px', color: '#666' }}>
-                            "My approach combines classical Pilates precision with athletic conditioning.
-                            I created The Jessie Moves to help you find strength in softness and power in control."
+                            {content.instructorSection?.quote || '"My approach combines classical Pilates precision with athletic conditioning. I created The Jessie Moves to help you find strength in softness and power in control."'}
                         </p>
                     </div>
                 </div>
@@ -93,10 +109,9 @@ const WebsiteHome = () => {
             <section className="tpc-testimonial-bg">
                 <div className="tpc-section-header">
                     <p className="tpc-quote">
-                        "While you can feel the burn the next day, these aren’t the kind of workouts you’ll hate or dread.
-                        Instead, they invite you to connect with your body and breath, and simultaneously get the dopamine pumping."
+                        {content.testimonial?.quote || '"While you can feel the burn the next day, these aren’t the kind of workouts you’ll hate or dread. Instead, they invite you to connect with your body and breath, and simultaneously get the dopamine pumping."'}
                     </p>
-                    <p className="tpc-quote-author">Clarissa</p>
+                    <p className="tpc-quote-author">{content.testimonial?.author || 'Clarissa'}</p>
                 </div>
             </section>
 

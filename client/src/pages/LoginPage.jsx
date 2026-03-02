@@ -14,6 +14,11 @@ const LoginPage = ({ onSwitchToRegister }) => {
         const res = await login(email, password);
         if (!res.success) {
             setError(res.error);
+        } else {
+            // Force reload to let AppRoots logic handle DashboardRoute correctly if needed,
+            // or we could just let the AuthContext update trigger the redirect via PublicRoute
+            // PublicRoute redirects to /ai/dashboard, which then checks the admin email.
+            // This is already handled elegantly by the DashboardRoute we made in App.jsx.
         }
     };
 

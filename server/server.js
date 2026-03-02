@@ -12,6 +12,8 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const postureRoutes = require('./routes/postureRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes'); // Import newsletter routes
+const contentRoutes = require('./routes/contentRoutes');
+const styleRoutes = require('./routes/styleRoutes');
 
 
 const app = express();
@@ -46,6 +48,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/postures', postureRoutes);
 app.use('/api/newsletter', newsletterRoutes); // Use newsletter routes
+app.use('/api/content', contentRoutes);
+app.use('/api/style', styleRoutes);
 
 
 app.get('/', (req, res) => {

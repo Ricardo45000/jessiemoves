@@ -1,0 +1,305 @@
+.admin-dashboard-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    position: relative;
+    overflow-x: hidden;
+}
+
+.admin-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.admin-content-area {
+    padding: 180px 3rem 4rem 3rem;
+    /* 180px top padding to clear floating navbar */
+    flex: 1;
+}
+
+.admin-sidebar-header {
+    padding: 2rem;
+    border-bottom: 1px solid #333;
+}
+
+.admin-sidebar-header h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    color: var(--primary-accent);
+}
+
+.admin-sidebar-header p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.admin-nav {
+    flex: 1;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-nav-item {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    text-align: left;
+    padding: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.admin-nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.admin-nav-item.active {
+    background-color: rgba(var(--primary-accent-rgb), 0.1);
+    color: var(--primary-accent);
+    font-weight: 500;
+}
+
+.admin-sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #333;
+}
+
+.admin-logout-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: transparent;
+    border: 1px solid #555;
+    color: var(--text-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.admin-logout-btn:hover {
+    background-color: #333;
+}
+
+.admin-welcome-card {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.admin-welcome-card h2 {
+    margin: 0 0 1rem 0;
+    color: var(--primary-accent);
+}
+
+.admin-welcome-card p {
+    margin: 0;
+    color: #ccc;
+    font-size: 1.1rem;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    .admin-content-area {
+        padding: 160px 1.5rem 2rem 1.5rem;
+    }
+
+    .admin-welcome-card {
+        padding: 1.5rem;
+    }
+}
+
+/* --- Admin Subpages (Users & Classes) --- */
+.admin-subpage {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.admin-subpage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-default);
+    padding-bottom: 1rem;
+}
+
+.admin-subpage-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.admin-subpage-header p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* Admin Data Tables (Users) */
+.admin-table-container {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.admin-table th {
+    background-color: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Admin Cards (Classes) */
+.admin-categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.admin-category-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+
+.admin-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.admin-category-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.admin-category-desc {
+    color: var(--text-secondary);
+    margin: 0 0 1rem 0;
+    line-height: 1.5;
+}
+
+.admin-category-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-default);
+}
+
+/* Admin Buttons */
+.admin-btn-primary {
+    background-color: var(--primary-accent, #6366f1);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.admin-btn-primary:hover {
+    filter: brightness(1.1);
+}
+
+.admin-btn-secondary {
+    background: transparent;
+    color: var(--text-light);
+    border: 1px solid var(--border-default);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.admin-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.admin-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.admin-category-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Admin Modals */
+.admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.admin-modal {
+    background: var(--bg-card);
+    padding: 2.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    width: 90%;
+    max-width: 500px;
+}
+
+.admin-modal h3 {
+    margin: 0 0 1.5rem 0;
+}
+
+.admin-modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.admin-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
