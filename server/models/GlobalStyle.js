@@ -4,15 +4,15 @@ const pageStyleSchema = new mongoose.Schema({
     colors: {
         backgroundColor: {
             type: String,
-            default: '#0a0a0f'
+            default: '#ffffff'
         },
         primaryTextColor: {
             type: String,
-            default: '#f0f0f5'
+            default: '#1C1C1C'
         },
         secondaryTextColor: {
             type: String,
-            default: '#9ca3af'
+            default: '#4A4A4A'
         },
         accentColor: {
             type: String,

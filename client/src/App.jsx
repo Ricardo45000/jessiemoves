@@ -236,10 +236,10 @@ const GlobalStyleInjector = () => {
     // Apply heading font specifically if needed (can be used on h1, h2, etc manually)
     root.style.setProperty('--font-heading', activeConfig.typography.headingFont);
 
-    // Force apply body and heading styles directly to be safe
-    document.body.style.fontFamily = activeConfig.typography.bodyFont;
-    document.body.style.backgroundColor = activeConfig.colors.backgroundColor;
-    document.body.style.color = activeConfig.colors.primaryTextColor;
+    // Remove direct body manipulation to prevent overriding page-specific backgrounds and text
+    // document.body.style.fontFamily = activeConfig.typography.bodyFont;
+    // document.body.style.backgroundColor = activeConfig.colors.backgroundColor;
+    // document.body.style.color = activeConfig.colors.primaryTextColor;
   }, [location.pathname, fullConfig]);
 
   return null;

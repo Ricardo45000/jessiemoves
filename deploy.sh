@@ -5,14 +5,15 @@ REPO_URL="https://github.com/Ricardo45000/jessiemoves.git"
 APP_DIR="/var/www/jessiemoves"
 CLIENT_DIR="$APP_DIR/client"
 SERVER_DIR="$APP_DIR/server"
-DOMAIN="your_domain_or_ip" # Replace this with your actual domain or IP
+DOMAIN="thejessiemoves.com" # Replace this with your actual domain or IP
+LETSENCRYPT_EMAIL="ric4rdo.da.silva@gmail.com" # Replace with your email for SSL certificate notifications
 
 # 1. System Update & Dependencies
 echo "Updating system..."
 sudo apt update && sudo apt upgrade -y
-echo "Installing Node.js, Nginx, Git..."
+echo "Installing Node.js, Nginx, Git, Certbot..."
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs nginx git
+sudo apt install -y nodejs nginx git certbot python3-certbot-nginx
 
 # Install PM2 globally
 sudo npm install -g pm2
@@ -55,14 +56,29 @@ npm run build
 echo "Configuring Nginx..."
 sudo cp "$APP_DIR/nginx.conf.example" /etc/nginx/sites-available/jessiemoves
 # Update domain in config if provided
-# sed -i "s/your_domain_or_ip/$DOMAIN/g" /etc/nginx/sites-available/jessiemoves
+if [ "$DOMAIN" != "your_domain_or_ip" ]; then
+    sudo sed -i "s/your_domain_or_ip/$DOMAIN/g" /etc/nginx/sites-available/jessiemoves
+fi
 
 sudo ln -sf /etc/nginx/sites-available/jessiemoves /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl restart nginx
 
-# 6. Final Steps
+# 6. Setup SSL with Let's Encrypt (HTTPS)
+if [ "$DOMAIN" != "your_domain_or_ip" ] && [ "$LETSENCRYPT_EMAIL" != "your_email@example.com" ]; then
+    echo "Setting up SSL with Let's Encrypt for $DOMAIN..."
+    sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$LETSENCRYPT_EMAIL"
+else
+    echo "Skipping automatic SSL setup. To enable HTTPS later, configure DOMAIN and LETSENCRYPT_EMAIL and run:"
+    echo "sudo certbot --nginx -d your_domain"
+fi
+
+# 7. Final Steps
 echo "Deployment Complete!"
 echo "Backend running on port 5000 (proxied via Nginx)."
-echo "Frontend served at http://$DOMAIN"
+if [ "$DOMAIN" != "your_domain_or_ip" ] && [ "$LETSENCRYPT_EMAIL" != "your_email@example.com" ]; then
+    echo "Frontend served securely at https://$DOMAIN"
+else
+    echo "Frontend served at http://$DOMAIN"
+fi
 echo "Don't forget to configure your .env file in $SERVER_DIR!"
